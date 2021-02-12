@@ -12,3 +12,6 @@ _deps
 
 # Debugging files
 **/debug_*
+
+# build files
+build
