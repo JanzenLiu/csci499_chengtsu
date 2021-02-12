@@ -16,13 +16,13 @@ class KVStoreClient {
 
   // Adds a value under the key, and returns true/false
   // if the put was successful/failed.
-  bool Put(std::string key, std::string value);
+  bool Put(const std::string& key, const std::string& value);
 
   // Returns all previously stored values under the key.
-  std::vector<std::string> Get(std::string key);
+  std::vector<std::string> Get(const std::string& key);
 
   // Deletes all previously stored values under the key.
-  void Remove(std::string key);
+  void Remove(const std::string& key);
 
  private:
   std::unique_ptr<kvstore::KeyValueStore::Stub> stub_;
