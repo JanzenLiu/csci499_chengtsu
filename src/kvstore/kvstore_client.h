@@ -9,6 +9,7 @@
 
 #include "kvstore.grpc.pb.h"
 
+// A client to make RPC to the remote key-value store gRPC service.
 class KVStoreClient {
  public:
   KVStoreClient(std::shared_ptr<grpc::Channel> channel)
