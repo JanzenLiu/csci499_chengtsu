@@ -10,6 +10,8 @@
 // with the backend storage system, and responds to the remote callers.
 class KeyValueStoreServiceImpl final : public kvstore::KeyValueStore::Service {
  public:
+  KeyValueStoreServiceImpl(): store_() {}
+
   // gRPC interface to add a value under a key.
   grpc::Status put(grpc::ServerContext* context,
                    const kvstore::PutRequest* request,
