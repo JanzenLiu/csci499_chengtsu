@@ -11,9 +11,10 @@ using std::pair;
 using std::string;
 using std::vector;
 
-KVStore::KVStore() {}
+KVStore::KVStore() : map_(), mutex_() {}
 
-KVStore::KVStore(initializer_list<pair<string, vector<string>>> args) {
+KVStore::KVStore(initializer_list<pair<string, vector<string>>> args)
+    : map_(), mutex_() {
   for (auto& p : args) {
     map_[p.first] = p.second;
   }
