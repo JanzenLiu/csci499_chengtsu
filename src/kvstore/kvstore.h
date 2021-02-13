@@ -18,22 +18,21 @@ class KVStore {
   // If there are duplicate keys, for each unique key,
   // the last occurrence counts.
   KVStore(std::initializer_list<
-      std::pair<std::string, std::vector<std::string>>
-  > args);
+      std::pair<std::string, std::vector<std::string>>> args);
 
   // Returns all previously stored values under the key.
   // A copy instead of a reference is returned here (unlike
   // std::unordered_map), to make sure the user can only add
   // values to a key through the `Put()` interface, which is
   // guaranteed to be thread-safe.
-  std::vector<std::string> Get(std::string key);
+  std::vector<std::string> Get(const std::string& key) const;
 
   // Adds a value under the key, and returns true if it is a new key.
-  bool Put(std::string key, std::string value);
+  bool Put(const std::string& key, const std::string& value);
 
   // Deletes all previously stored values under the key and
   // returns true if the key exists in the KVStore.
-  bool Remove(std::string key);
+  bool Remove(const std::string& key);
 
   // Deletes all keys and values.
   void Clear();
@@ -45,11 +44,11 @@ class KVStore {
   bool Empty() const noexcept;
 
   // Prints all keys and values stored the KVStore.
-  void Print();
+  void Print()  const;
 
  private:
   std::unordered_map<std::string, std::vector<std::string>> map_;
-  std::shared_mutex mutex_;
+  mutable std::shared_mutex mutex_;
 };
 
 #endif //CSCI499_CHENGTSU_KVSTORE_H

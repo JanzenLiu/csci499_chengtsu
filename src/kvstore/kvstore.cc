@@ -11,15 +11,16 @@ using std::pair;
 using std::string;
 using std::vector;
 
-KVStore::KVStore() {}
+KVStore::KVStore() : map_(), mutex_() {}
 
-KVStore::KVStore(initializer_list<pair<string, vector<string>>> args) {
+KVStore::KVStore(initializer_list<pair<string, vector<string>>> args)
+    : map_(), mutex_() {
   for (auto& p : args) {
     map_[p.first] = p.second;
   }
 }
 
-vector<string> KVStore::Get(string key) {
+vector<string> KVStore::Get(const string& key) const {
   // A read-write lock is needed here to avoid deleted
   // or changed iterator.
   std::shared_lock<std::shared_mutex> lock(mutex_);
@@ -30,7 +31,7 @@ vector<string> KVStore::Get(string key) {
   return {};
 }
 
-bool KVStore::Put(string key, string value) {
+bool KVStore::Put(const string& key, const string& value) {
   std::unique_lock<std::shared_mutex> lock(mutex_);
   auto iter = map_.find(key);
   if (iter != map_.end()) {  // The key already exists.
@@ -41,7 +42,7 @@ bool KVStore::Put(string key, string value) {
   return true;
 }
 
-bool KVStore::Remove(string key) {
+bool KVStore::Remove(const string& key) {
   std::unique_lock<std::shared_mutex> lock(mutex_);
   return map_.erase(key);
 }
@@ -59,7 +60,7 @@ bool KVStore::Empty() const noexcept {
   return map_.empty();
 }
 
-void KVStore::Print() {
+void KVStore::Print() const {
   // A read-write lock is needed here to avoid deleted
   // or changed iterator.
   std::shared_lock<std::shared_mutex> lock(mutex_);

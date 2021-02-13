@@ -56,7 +56,7 @@ TEST(MapTest, MapTest) {
 // Tests the initializer list constructor.
 TEST(MapTest, InitListConstructorTest) {
   KVStore store{ {"k1", {"v1"}}, {"k2", {"v2", "v3"}} };
-  EXPECT_EQ(2, store.Size());
+  ASSERT_EQ(2, store.Size());
   EXPECT_TRUE(VectorEq({"v1"}, store.Get("k1")));
   EXPECT_TRUE(VectorEq({"v2", "v3"}, store.Get("k2")));
   store.Put("k1", "v4");
