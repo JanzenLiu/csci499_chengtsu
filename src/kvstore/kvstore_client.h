@@ -26,6 +26,7 @@ class KVStoreClient {
   void Remove(const std::string& key);
 
  private:
+  // Stub to make the actual RPC.
   std::unique_ptr<kvstore::KeyValueStore::Stub> stub_;
 };
 
