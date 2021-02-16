@@ -1,4 +1,4 @@
-#include "kvstore_client.h"
+#include "../src/kvstore/kvstore_client.h"
 
 #include <iostream>
 #include <memory>
@@ -7,6 +7,8 @@
 
 #include <gflags/gflags.h>
 #include <grpcpp/grpcpp.h>
+
+DEFINE_int32(port, 50001, "Port number for the kvstore GRPC interface to use.");
 
 using std::cout;
 using std::endl;
@@ -25,7 +27,8 @@ ostream& operator<<(ostream& os, const vector<T>& vec) {
   return os;
 }
 
-// Parses the command input by user in the CLI.
+// Parses the command input by user in the CLI and returns
+// a vector of tokens constituting the command.
 vector<string> ParseCommand(const string& command) {
   vector<string> tokens;
   size_t start = 0;  // Begin index of the next search.
@@ -41,8 +44,6 @@ vector<string> ParseCommand(const string& command) {
   }
   return tokens;
 }
-
-DEFINE_int32(port, 50001, "Port number for the kvstore GRPC interface to use.");
 
 // Runs client command line tool for the KVStore gRPC service.
 int main(int argc, char** argv) {
