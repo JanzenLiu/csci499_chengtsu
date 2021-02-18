@@ -41,5 +41,4 @@ grpc::Status Follow(const google::protobuf::Any *in,
 }
 };
 
-
 #endif //CSCI499_CHENGTSU_CAW_HANDLER_H
