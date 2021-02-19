@@ -2,7 +2,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "../caw/caw_handler.h"
+#include "caw/caw_handler.h"
 
 using faz::EventReply;
 using faz::EventRequest;
