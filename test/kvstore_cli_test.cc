@@ -1,4 +1,4 @@
-#include "../src/kvstore/kvstore_client.h"
+#include "kvstore/kvstore_client.h"
 
 #include <iostream>
 #include <memory>
