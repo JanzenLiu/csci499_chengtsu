@@ -11,16 +11,8 @@
 #include "colormod.h"
 #include "faz.grpc.pb.h"
 
-using caw::RegisteruserReply;
-using caw::RegisteruserRequest;
-using caw::FollowReply;
-using caw::FollowRequest;
 using faz::EventReply;
 using faz::EventRequest;
-using faz::HookReply;
-using faz::HookRequest;
-using faz::UnhookReply;
-using faz::UnhookRequest;
 using google::protobuf::Any;
 using grpc::ClientContext;
 using grpc::Status;
@@ -38,8 +30,8 @@ bool CawClient::HookAll() {
   bool success = true;
   for (auto [event_type, function_name] : kFuncs) {
     ClientContext context;
-    HookRequest request;
-    HookReply response;
+    faz::HookRequest request;
+    faz::HookReply response;
     request.set_event_type(event_type);
     request.set_event_function(function_name);
     Status status = stub_->hook(&context, request, &response);
@@ -57,8 +49,8 @@ bool CawClient::UnhookAll() {
   bool success = true;
   for (auto [event_type, _] : kFuncs) {
     ClientContext context;
-    UnhookRequest request;
-    UnhookReply response;
+    faz::UnhookRequest request;
+    faz::UnhookReply response;
     request.set_event_type(event_type);
     Status status = stub_->unhook(&context, request, &response);
     if (!status.ok()) {
@@ -73,7 +65,7 @@ bool CawClient::UnhookAll() {
 
 bool CawClient::RegisterUser(const string& username) {
   // Make the inner request packed in the generic request payload.
-  RegisteruserRequest inner_request;
+  caw::RegisteruserRequest inner_request;
   inner_request.set_username(username);
   // Make the generic request.
   ClientContext context;
@@ -93,7 +85,7 @@ bool CawClient::RegisterUser(const string& username) {
 
 bool CawClient::Follow(const string& username, const string& to_follow) {
   // Make the inner request packed in the generic request payload.
-  FollowRequest inner_request;
+  caw::FollowRequest inner_request;
   inner_request.set_username(username);
   inner_request.set_to_follow(to_follow);
   // Make the generic request.

@@ -7,10 +7,6 @@
 
 #include "caw.pb.h"
 
-using caw::RegisteruserReply;
-using caw::RegisteruserRequest;
-using caw::FollowReply;
-using caw::FollowRequest;
 using google::protobuf::Any;
 using grpc::Status;
 using grpc::StatusCode;
@@ -32,7 +28,7 @@ bool UserExists(const string& username, KVStoreClient* kvstore){
 Status caw::handler::RegisterUser(const Any* in, Any* out,
                                   KVStoreClient* kvstore) {
   // Unpack the request message.
-  RegisteruserRequest request;
+  caw::RegisteruserRequest request;
   in->UnpackTo(&request);
   string username = request.username();
   // Check the existence of the user.
@@ -46,7 +42,7 @@ Status caw::handler::RegisterUser(const Any* in, Any* out,
                   "Failed to add user to the kvstore.");
   }
   // Pack the response message.
-  RegisteruserReply response;
+  caw::RegisteruserReply response;
   out->PackFrom(response);
   return Status::OK;
 }
@@ -54,7 +50,7 @@ Status caw::handler::RegisterUser(const Any* in, Any* out,
 Status caw::handler::Follow(const Any* in, Any* out,
                             KVStoreClient* kvstore) {
   // Unpack the request message.
-  FollowRequest request;
+  caw::FollowRequest request;
   in->UnpackTo(&request);
   string username = request.username();
   string to_follow = request.to_follow();
@@ -93,7 +89,7 @@ Status caw::handler::Follow(const Any* in, Any* out,
                   "Failed to add following to the kvstore.");
   }
   // Pack the response message.
-  FollowReply response;
+  caw::FollowReply response;
   out->PackFrom(response);
   return Status::OK;
 }
