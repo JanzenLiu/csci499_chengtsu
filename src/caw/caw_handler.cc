@@ -18,9 +18,10 @@ using std::endl;
 using std::string;
 using std::to_string;
 
-const string kUserPrefix = "caw.u.";  // For a user.
-const string kFollowListPrefix = "caw.fl.";  // For a user's following list.
-const string kFollowPairPrefix = "caw.fp.";  // For a following pair.
+const string kUserPrefix = "user.";
+const string kUserFollowingsPrefix = "user_followings.";
+const string kUserFollowersPrefix = "user_followers.";
+const string kFollowingPairPrefix = "following_pair.";
 
 // Returns true if the user exists in the KVStore.
 bool UserExists(const string& username, KVStoreClient* kvstore){
@@ -63,7 +64,7 @@ Status caw::handler::Follow(const Any* in, Any* out,
   }
   // Check whether the user is already following the other.
   // Encode the `username` length into the key to avoid ambiguity.
-  string key = kFollowPairPrefix + to_string(username.length())
+  string key = kFollowingPairPrefix + to_string(username.length())
       + "." + username + "." + to_follow;
   if (!kvstore->Get(key).empty()) {
     return Status(StatusCode::ALREADY_EXISTS,
@@ -74,10 +75,19 @@ Status caw::handler::Follow(const Any* in, Any* out,
     return Status(StatusCode::UNAVAILABLE,
                   "Failed to add following to the kvstore.");
   }
-  key = kFollowListPrefix + username;
+  key = kUserFollowingsPrefix + username;
   if (!kvstore->Put(key, to_follow)) {
     LOG(ERROR) << "Added the following pair but failed to update the "
                << "following list. username=" << username << ", "
+               << "to_follow=" << to_follow << endl;
+    return Status(StatusCode::UNAVAILABLE,
+                  "Failed to add following to the kvstore.");
+  }
+  key = kUserFollowersPrefix + to_follow;
+  if (!kvstore->Put(key, username)) {
+    LOG(ERROR) << "Added the following pair and updated the following"
+               << "list, but failed to update the follower list. "
+               << "username=" << username << ", "
                << "to_follow=" << to_follow << endl;
     return Status(StatusCode::UNAVAILABLE,
                   "Failed to add following to the kvstore.");
