@@ -10,6 +10,7 @@ using std::cout;
 using std::endl;
 using std::ostream;
 
+// Returns true if the port specified by the flag is valid.
 static bool ValidatePort(const char* flagname, int32_t value) {
   if (value > 0 && value < 65536) { return true; }
   cout << "Invalid value for --" << std::string(flagname)
@@ -42,14 +43,17 @@ int main(int argc, char *argv[]) {
       target_str, grpc::InsecureChannelCredentials());
   CawClient client(channel);
 
+  // Handle flag --hook_all.
   if (FLAGS_hook_all) {
     cout << "Hooking all Caw functions to the Faz layer..." << endl;
     client.HookAll();
   }
 
+  // Handle flag --registeruser.
   if (!FLAGS_registeruser.empty()) {
     client.RegisterUser(FLAGS_registeruser);
   }
+  // Handle flag --follow.
   if (!FLAGS_follow.empty()) {
     if (FLAGS_user.empty()) {
       cout << "You need to login to follow a user." << endl;
@@ -58,6 +62,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // Handle flag --unhook_all.
   if (FLAGS_unhook_all) {
     cout << "Unhooking all Caw functions from the Faz layer..." << endl;
     client.UnhookAll();
