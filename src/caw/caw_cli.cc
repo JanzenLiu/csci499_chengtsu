@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 
   // Instantiate the client. It requires a channel, out of which the actual RPCs
   // are created. This channel models a connection to an endpoint (in this case,
-  // localhost at port 50051). We indicate that the channel isn't authenticated
+  // localhost at port 50000). We indicate that the channel isn't authenticated
   // (use of InsecureChannelCredentials()).
   std::string target_str = "localhost:" + std::to_string(FLAGS_port);
   auto channel = grpc::CreateChannel(
