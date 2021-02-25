@@ -7,7 +7,9 @@
 #include <grpcpp/grpcpp.h>
 
 #include "faz.grpc.pb.h"
+#include "kvstore/kvstore.h"
 #include "kvstore/kvstore_client.h"
+#include "kvstore/kvstore_interface.h"
 
 // Function format the FazService accepts.
 //
@@ -24,7 +26,7 @@
 //    error type and carrying some error message.
 using FazFunc =  std::function<grpc::Status(
     const google::protobuf::Any* in, google::protobuf::Any* out,
-    KVStoreClient* kvstore)>;
+    KVStoreInterface* kvstore)>;
 
 // A Function-as-a-Service (FaaS) service who executes a registered
 // function f when receiving an event that matches an event type e
@@ -32,7 +34,7 @@ using FazFunc =  std::function<grpc::Status(
 class FazServiceImpl final : public faz::FazService::Service {
  public:
   FazServiceImpl(std::shared_ptr<grpc::Channel> channel)
-      : registered_funcs_(), kvstore_(channel) {}
+      : registered_funcs_(), kvstore_(new KVStoreClient(channel)) {}
 
   // gRPC interface to register a function with an associated event
   // type for future execution by Faz.
@@ -59,7 +61,7 @@ class FazServiceImpl final : public faz::FazService::Service {
   std::unordered_map<int, FazFunc> registered_funcs_;
   // key-value store abstraction that enables storage and retrieval of data
   // for functions that are being executed.
-  KVStoreClient kvstore_;
+  std::unique_ptr<KVStoreInterface> kvstore_;
 };
 
 typedef FazServiceImpl FazService;

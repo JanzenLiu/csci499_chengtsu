@@ -5,6 +5,7 @@
 #include <vector>
 
 class KVStoreInterface {
+ public:
   // Adds a value under the key, and returns true
   // if the put was successful.
   virtual bool Put(const std::string& key, const std::string& value) = 0;

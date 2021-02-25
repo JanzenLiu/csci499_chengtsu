@@ -20,13 +20,13 @@ const string kUserFollowersPrefix = "user_followers.";
 const string kFollowingPairPrefix = "following_pair.";
 
 // Returns true if the user exists in the KVStore.
-bool UserExists(const string& username, KVStoreClient* kvstore){
+bool UserExists(const string& username, KVStoreInterface* kvstore){
   string key = kUserPrefix + username;
   return !kvstore->Get(key).empty();
 }
 
 Status caw::handler::RegisterUser(const Any* in, Any* out,
-                                  KVStoreClient* kvstore) {
+                                  KVStoreInterface* kvstore) {
   // Unpack the request message.
   caw::RegisteruserRequest request;
   in->UnpackTo(&request);
@@ -48,7 +48,7 @@ Status caw::handler::RegisterUser(const Any* in, Any* out,
 }
 
 Status caw::handler::Follow(const Any* in, Any* out,
-                            KVStoreClient* kvstore) {
+                            KVStoreInterface* kvstore) {
   // Unpack the request message.
   caw::FollowRequest request;
   in->UnpackTo(&request);
@@ -95,7 +95,7 @@ Status caw::handler::Follow(const Any* in, Any* out,
 }
 
 Status caw::handler::Profile(const Any *in, Any *out,
-                             KVStoreClient *kvstore) {
+                             KVStoreInterface *kvstore) {
   // Unpack the request message.
   caw::ProfileRequest request;
   in->UnpackTo(&request);

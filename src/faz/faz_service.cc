@@ -61,5 +61,5 @@ Status FazServiceImpl::event(
                   "Function not found in registered functions.");
   }
   FazFunc func = iter->second;
-  return func(&payload, response->mutable_payload(), &kvstore_);
+  return func(&payload, response->mutable_payload(), kvstore_.get());
 }
