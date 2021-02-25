@@ -93,3 +93,28 @@ Status caw::handler::Follow(const Any* in, Any* out,
   out->PackFrom(response);
   return Status::OK;
 }
+
+Status caw::handler::Profile(const Any *in, Any *out,
+                             KVStoreClient *kvstore) {
+  // Unpack the request message.
+  caw::ProfileRequest request;
+  in->UnpackTo(&request);
+  string username = request.username();
+  // Check the existence of the user.
+  if (!UserExists(username, kvstore)) {
+    return Status(StatusCode::NOT_FOUND, "User not found.");
+  }
+  // Get followings and followers from the KVStore and
+  // put them into the response message.
+  ProfileReply response;
+  string key = kUserFollowingsPrefix + username;
+  for (string& other : kvstore->Get(key)) {
+    response.add_following(other);
+  }
+  key = kUserFollowersPrefix + username;
+  for (string& other : kvstore->Get(key)) {
+    response.add_followers(other);
+  }
+  out->PackFrom(response);
+  return Status::OK;
+}
