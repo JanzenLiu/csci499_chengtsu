@@ -65,17 +65,6 @@ TEST(MapTest, InitListConstructorTest) {
   EXPECT_TRUE(VectorEq({"v2", "v3", "v5"}, store.Get("k2")));
 }
 
-// Tests the correctness of the return value of `KVStore::Put()`.
-TEST(ReturnValueTest, PutTest) {
-  KVStore store;
-  EXPECT_TRUE(store.Put("k1", "v1"));
-  EXPECT_TRUE(store.Put("k2", "v2"));
-  EXPECT_FALSE(store.Put("k1", "v3"));
-  EXPECT_FALSE(store.Put("k1", "v4"));
-  EXPECT_TRUE(store.Put("k3", "v5"));
-  EXPECT_FALSE(store.Put("k2", "v6"));
-}
-
 // Tests the correctness of the return value of `KVStore:Remove()`.
 TEST(ReturnValueTest, RemoveTest) {
   KVStore store;

@@ -29,7 +29,8 @@ class KVStore : public KVStoreInterface {
   // guaranteed to be thread-safe.
   std::vector<std::string> Get(const std::string& key) const;
 
-  // Adds a value under the key, and returns true if it is a new key.
+  // Adds a value under the key, and returns true if the put
+  // was successful.
   bool Put(const std::string& key, const std::string& value);
 
   // Deletes all previously stored values under the key and
