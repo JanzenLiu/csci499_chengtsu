@@ -75,3 +75,12 @@ add_executable(${_kvstore_shell_test}
         test/kvstore_shell_test.cc)
 target_link_libraries(${_kvstore_shell_test}
         ${_kvstore_client} gflags)
+
+# Target: Caw Handler Test
+set(_caw_handler_test caw_handler_test)
+add_executable(${_caw_handler_test}
+        test/caw_handler_test.cc
+        src/caw/caw_handler.cc
+        src/kvstore/kvstore.cc)
+target_link_libraries(${_caw_handler_test}
+        gtest gtest_main caw_grpc ${GRPC_LIBS} glog)

@@ -69,7 +69,7 @@ Status caw::handler::Follow(const Any* in, Any* out,
   // Store the relationship to the KVStore.
   if (!kvstore->Put(key, "")) {
     return Status(StatusCode::UNAVAILABLE,
-                  "Failed to add following to the kvstore.");
+                  "Failed to add the following pair to the kvstore.");
   }
   key = kUserFollowingsPrefix + username;
   if (!kvstore->Put(key, to_follow)) {
