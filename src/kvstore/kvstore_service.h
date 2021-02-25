@@ -4,7 +4,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include "kvstore.grpc.pb.h"
-#include "kvstore.h"
+#include "kvstore/kvstore.h"
 
 // A key-value store gRPC service who accepts incoming requests, interacts
 // with the backend storage system, and responds to the remote callers.

@@ -1,4 +1,4 @@
-#include "kvstore_service.h"
+#include "kvstore/kvstore_service.h"
 
 #include <iostream>
 #include <string>
@@ -8,6 +8,7 @@
 using grpc::ServerContext;
 using grpc::ServerReaderWriter;
 using grpc::Status;
+using grpc::StatusCode;
 using kvstore::GetReply;
 using kvstore::GetRequest;
 using kvstore::PutReply;
@@ -38,6 +39,10 @@ Status KeyValueStoreServiceImpl::get(
 Status KeyValueStoreServiceImpl::remove(
     ServerContext* context, const RemoveRequest* request,
     RemoveReply* response) {
-  store_.Remove(request->key());
+  bool found = store_.Remove(request->key());
+  if (!found) {
+    return Status(StatusCode::NOT_FOUND,
+                  "Key not found in the kvstore.");
+  }
   return Status::OK;
 }

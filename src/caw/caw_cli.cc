@@ -4,7 +4,7 @@
 #include <gflags/gflags.h>
 #include <grpcpp/grpcpp.h>
 
-#include "caw_client.h"
+#include "caw/caw_client.h"
 
 using std::cout;
 using std::endl;

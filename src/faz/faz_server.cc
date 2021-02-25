@@ -6,7 +6,7 @@
 #include <glog/logging.h>
 #include <grpcpp/grpcpp.h>
 
-#include "faz_service.h"
+#include "faz/faz_service.h"
 
 static bool ValidatePort(const char* flagname, int32_t value) {
   if (value > 0 && value < 65536) { return true; }

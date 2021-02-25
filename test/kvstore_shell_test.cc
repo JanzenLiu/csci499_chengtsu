@@ -45,6 +45,19 @@ vector<string> ParseCommand(const string& command) {
   return tokens;
 }
 
+void promptUsage() {
+  cout << "KVStore CLI Usage:" << endl
+       << "put <key> <value>  Add a value under a key." << endl
+       << "get <key>          Get all values under a key." << endl
+       << "delete <key>       Delete all values under a key." << endl
+       << "exit               Exit the command-line tool." << endl;
+}
+
+void promptInvalid() {
+  cout << "Invalid command." << endl;
+  promptUsage();
+};
+
 // Runs client command line tool for the KVStore gRPC service.
 int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -63,8 +76,6 @@ int main(int argc, char** argv) {
       target_str, grpc::InsecureChannelCredentials());
   KVStoreClient client(channel);
 
-  auto promptInvalid = [](){ cout << "Invalid command." << endl; };
-
   // Loop until system interrupt or command to exit.
   for (string line; std::getline(std::cin, line);) {
     auto tokens = ParseCommand(line);
@@ -79,11 +90,12 @@ int main(int argc, char** argv) {
       cout << client.Get(tokens[1]) << endl;
     } else if (op == "delete" && tokens.size() >= 2) {
       client.Remove(tokens[1]);
+    } else if (op == "help") {
+      promptUsage();
     } else if (op == "exit") {
       break;
     } else {
       promptInvalid();
-      continue;
     }
   }
 
