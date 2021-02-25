@@ -13,10 +13,14 @@ set(_REFLECTION gRPC::grpc++_reflection)
 find_package(Threads REQUIRED)
 find_package(GTest REQUIRED)
 
-add_subdirectory(protos)
-include_directories(${CMAKE_BINARY_DIR}/protos src)
-
+# Group gRPC related libraries together.
 set(GRPC_LIBS ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
+
+add_subdirectory(protos)
+
+# Include the output directory of the generated proto files
+# and the project source directory.
+include_directories(${CMAKE_BINARY_DIR}/protos src)
 
 # Target: KVStore server
 set(_kvstore_server kvstore_server)
