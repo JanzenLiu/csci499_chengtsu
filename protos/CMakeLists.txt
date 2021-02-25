@@ -22,14 +22,15 @@ find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
 # Get the filenames of all the proto files.
 file(GLOB PROTO_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.proto)
 
-# Generate header and source files for all the proto files
+# Generate header and source files for all the proto files.
 foreach(proto ${PROTO_FILES})
-    # Get filename without extension
+    # Get filename without extension.
     get_filename_component(proto_name_we ${proto} NAME_WE)
     get_filename_component(proto_name ${proto} NAME)
     get_filename_component(proto_dir "${proto}" PATH)
     message(STATUS "Configuring for ${proto_name}")
 
+    # Generate header and source files.
     set(proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/${proto_name_we}.pb.cc")
     set(proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/${proto_name_we}.pb.h")
     set(grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/${proto_name_we}.grpc.pb.cc")
@@ -44,6 +45,8 @@ foreach(proto ${PROTO_FILES})
             "${proto}"
             DEPENDS "${proto}")
 
-    add_library(${proto_name_we} STATIC ${proto_srcs} ${proto_hdrs} ${grpc_srcs} ${grpc_hdrs})
-    target_include_directories(${proto_name_we} PUBLIC ${Protobuf_INCLUDE_DIRS})
+    # Compile to a static library.
+    set(_target ${proto_name_we}_grpc)
+    add_library(${_target} STATIC ${proto_srcs} ${proto_hdrs} ${grpc_srcs} ${grpc_hdrs})
+    target_include_directories(${_target} PUBLIC ${Protobuf_INCLUDE_DIRS})
 endforeach()
