@@ -1,14 +1,12 @@
-#include "caw_client.h"
+#include "caw/caw_client.h"
 
 #include <iostream>
-#include <memory>
 #include <string>
 #include <unordered_map>
 
 #include <grpcpp/grpcpp.h>
 
 #include "caw.grpc.pb.h"
-#include "colormod.h"
 #include "faz.grpc.pb.h"
 
 using faz::EventReply;

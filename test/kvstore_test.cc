@@ -1,4 +1,4 @@
-#include "src/kvstore/kvstore.h"
+#include "kvstore/kvstore.h"
 
 #include <cstdlib>
 #include <string>

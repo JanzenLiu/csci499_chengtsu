@@ -6,7 +6,7 @@
 #include <glog/logging.h>
 #include <grpcpp/grpcpp.h>
 
-#include "kvstore_service.h"
+#include "kvstore/kvstore_service.h"
 
 DEFINE_int32(port, 50001, "Port number for the kvstore GRPC interface to use.");
 

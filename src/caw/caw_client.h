@@ -19,16 +19,18 @@ class CawClient {
   CawClient(std::shared_ptr<grpc::Channel> channel)
       : stub_(faz::FazService::NewStub(channel)) {}
 
-  // Hooks all Caw functions on Faz.
+  // Hooks all Caw functions on Faz, and returns true on success.
   bool HookAll();
 
-  // Unhooks all Caw functions from Faz.
+  // Unhooks all Caw functions from Faz, and returns true on success.
   bool UnhookAll();
 
-  // Sends an `EventType::kRegisterUser` event to Faz.
+  // Sends an `EventType::kRegisterUser` event to Faz,
+  // and returns true on success.
   bool RegisterUser(const std::string& username);
 
-  // Sends an `EventType::kFollow` event to Faz.
+  // Sends an `EventType::kFollow` event to Faz, and
+  // returns true on success.
   bool Follow(const std::string& username, const std::string& to_follow);
 
  private:
