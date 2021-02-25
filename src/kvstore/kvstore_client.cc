@@ -29,7 +29,7 @@ bool KVStoreClient::Put(const string& key, const string& value) {
   return status.ok();
 }
 
-vector<string> KVStoreClient::Get(const string& key) {
+vector<string> KVStoreClient::Get(const string& key) const {
   ClientContext context;
   auto stream = stub_->get(&context);
 
@@ -46,11 +46,12 @@ vector<string> KVStoreClient::Get(const string& key) {
   return values;
 }
 
-void KVStoreClient::Remove(const string& key) {
+bool KVStoreClient::Remove(const string& key) {
   RemoveRequest request;
   request.set_key(key);
 
   ClientContext context;
   RemoveReply response;
-  stub_->remove(&context, request, &response);
+  Status status = stub_->remove(&context, request, &response);
+  return status.ok();
 }

@@ -1,6 +1,8 @@
 #ifndef CSCI499_CHENGTSU_KVSTORE_H
 #define CSCI499_CHENGTSU_KVSTORE_H
 
+#include "kvstore/kvstore_interface.h"
+
 #include <initializer_list>
 #include <shared_mutex>
 #include <string>
@@ -10,7 +12,7 @@
 
 // A Concurrent Hashmap storing multiple string values
 // for each unique string key.
-class KVStore {
+class KVStore : public KVStoreInterface {
  public:
   KVStore();
 
@@ -47,7 +49,9 @@ class KVStore {
   void Print()  const;
 
  private:
+  // Hash map that stores the actual data.
   std::unordered_map<std::string, std::vector<std::string>> map_;
+  // Read-write lock to enforce thread-safety.
   mutable std::shared_mutex mutex_;
 };
 
