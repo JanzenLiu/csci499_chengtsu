@@ -76,8 +76,6 @@ int main(int argc, char** argv) {
       target_str, grpc::InsecureChannelCredentials());
   KVStoreClient client(channel);
 
-  auto promptInvalid = [](){ cout << "Invalid command." << endl; };
-
   // Loop until system interrupt or command to exit.
   for (string line; std::getline(std::cin, line);) {
     auto tokens = ParseCommand(line);
@@ -98,7 +96,6 @@ int main(int argc, char** argv) {
       break;
     } else {
       promptInvalid();
-      continue;
     }
   }
 
