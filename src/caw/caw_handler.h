@@ -46,7 +46,7 @@ grpc::Status Profile(const google::protobuf::Any *in,
                      google::protobuf::Any *out,
                      KVStoreInterface *kvstore);
 
-}
-};
+}  // namespace handler
+}  // namespace caw
 
 #endif //CSCI499_CHENGTSU_CAW_HANDLER_H
