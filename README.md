@@ -9,6 +9,9 @@
 
 An FaaS platform and a social network system on top of it. For USC CSCI499.
 
+## Architecture
+![Architecture and Workflow](./images/arch_and_workflow.svg)
+
 ## Pre-reqs
 To build and run this app locally you will need a few things:
 - Install **googletest**
