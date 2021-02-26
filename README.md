@@ -30,43 +30,28 @@ response messages to remote callers.
 What happens when you run the Caw command-line tool?
 
 1. You enter arguments with flags to the command-line tool.
-
 2. After parsing the arguments, if they are valid, the main function will call 
 the corresponding `CawClient` functions.
-
 3. The called `CawClient` function will make an RPC to the remote `FazService` running
 on a Faz Server.
-
 4. The RPC is made through a gRPC stub.
-
 5. The `FazService` will execute the corresponding Caw handler function (if hooked)
 in its `event()` function. If it's a hook/unhook request, it will run the `hook()`/`unhook()`
 function instead, and in this case, we will jump to the step 13 directly.
-
 6. The executing Caw handler function may make an RPC to the remote `KVStoreService` running
 on a KVStore Server if needed. Note that you can also set the `FazService` to use a local 
 `KVStore` instead of a remote `KVStoreService`. We just describe the case of remote service
 here for generality.
-
 7. The RPC is made through a gRPC stub embedded in a `KVStoreClient`.
-
 8. The `KVStoreService` will call its `put()`/`get()`/`remove()` function accordingly to
 interact with the underlying `KVStore`.
-
 9. The `KVStore` returns results to the caller.
-
 10. The `KVStoreService` sends back response message to the Caw handler function.
-
 11. The response message is sent through the gRPC stub.
-
 12. The Caw handler function returns on completion.
-
 13. The `FazService` sends back response message to the `CawClient`.
-
 14. The response message is sent through the gRPC stub.
-
 15. The `CawClient` returns results to the main function.
-
 16. The command-line tool will display messages to you via standard output based on the results.
 
 ## Pre-reqs
