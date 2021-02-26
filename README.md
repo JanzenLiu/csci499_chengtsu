@@ -9,10 +9,20 @@
 
 An FaaS platform and a social network system on top of it. For USC CSCI499 - Robust Systems Design and Implementation.
 
-## Architecture
+## Table of Contents
+
+- [Architecture](#arch)
+- [Pre-reqs](#pre-reqs)
+- [Build](#build)
+- [Usage](#usage)
+- [Test](#test)
+- [Authors](#authors)
+- [Acknowledgments](#acks)
+
+## Architecture <a name = "arch"></a>
 ![Architecture and Workflow](./images/arch_and_workflow.svg)
 
-As shown in the diagram, there will be three executables built in this project, they are:
+As shown in the diagram, there will be three executables built in this project (except tests), they are:
 
 - **caw_cli**: The Caw command-line tool who accepts the user's input, sends requests to 
 the Faz Server through the `CawClient` accordingly, and displays response messages to the 
@@ -54,21 +64,21 @@ interact with the underlying `KVStore`.
 15. The `CawClient` returns results to the main function.
 16. The command-line tool will display messages to you via standard output based on the results.
 
-## Pre-reqs
+## Pre-reqs <a name = "pre-reqs"></a>
 To build and run this app locally you will need a few things:
 - Install **googletest**
 - Install **gflags**
 - Install **glog**
 - Install **gRPC** and **Protobuf**
 
-## Build
+## Build <a name = "build"></a>
 ```
 mkdir build && cd build
 cmake ..
 make
 ```
 
-## Usage
+## Usage <a name = "usage"></a>
 To get the Caw platform work, you need to first start the KVStore server, 
 and then start the FaaS server. Then you can use the Caw command-line tool
 to use the Caw functionalities. 
@@ -77,12 +87,12 @@ Assume you are already in a directory containing the built executables.
 Below are instructions to get the system work.
 
 To run the KVStore server
-```bash
+```
 ./kvstore_server
 ```
 
 To run the FaaS server
-```bash
+```
 ./faz_server
 ```
 
@@ -113,3 +123,32 @@ To use the Caw command-line tool for different purposes
 >   --caw "I am the Armored Titan, he is the Colossal Titan" \
 >   --profile --unhook_all
 >```
+
+## Test <a name = "test"></a>
+Assume you are already in a directory containing the built executables.
+Below are instructions to run the tests.
+
+To run the KVStore (storage only) test
+```
+./kvstore_test
+```
+
+To run the Caw handler function test
+```
+./caw_handler_test
+```
+
+To run the KVStore shell to do interactive testing.
+Note that you can even run this when the other executables are running to 
+inspect the content of the KVStore, or even update the content to create
+some extreme cases (for example, a posted caw accidentally lost in the database).
+```
+./kvstore_shell_test
+```
+
+## Authors <a name = "authors"></a>
+- [Cheng-Tsung Liu](https://github.com/JanzenLiu)
+
+## Acknowledgements <a name = "acks"></a>
+- [Adam Egyed](https://github.com/adamegyed)
+- [Barath Raghavan](https://raghavan.usc.edu/)
