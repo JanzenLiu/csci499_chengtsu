@@ -7,10 +7,67 @@
 
 </div>
 
-An FaaS platform and a social network system on top of it. For USC CSCI499.
+An FaaS platform and a social network system on top of it. For USC CSCI499 - Robust Systems Design and Implementation.
 
 ## Architecture
 ![Architecture and Workflow](./images/arch_and_workflow.svg)
+
+As shown in the diagram, there will be three executables built in this project, they are:
+
+- **caw_cli**: The Caw command-line tool who accepts the user's input, sends requests to 
+the Faz Server through the `CawClient` accordingly, and displays response messages to the 
+user based on the return from the Faz Server.
+
+- **faz_server**: The Faz Server who hosts a `FazService`, which executes the corresponding
+Caw handler functions based on the incoming event types, and sends back response messages. 
+During the execution of Caw handler functions, interactions with a KVStore Server may occur,
+through a `KVStoreClient`.
+
+- **kvstore_server**: The KVStore Server who hosts a `KVStoreService`, which performs
+put/get/remove operations to the underlying `KVStore` instance as requested, and sends back
+response messages to remote callers.
+
+What happens when you run the Caw command-line tool?
+
+1. You enter arguments with flags to the command-line tool.
+
+2. After parsing the arguments, if they are valid, the main function will call 
+the corresponding `CawClient` functions.
+
+3. The called `CawClient` function will make an RPC to the remote `FazService` running
+on a Faz Server.
+
+4. The RPC is made through a gRPC stub.
+
+5. The `FazService` will execute the corresponding Caw handler function (if hooked)
+in its `event()` function. If it's a hook/unhook request, it will run the `hook()`/`unhook()`
+function instead, and in this case, we will jump to the step 13 directly.
+
+6. The executing Caw handler function may make an RPC to the remote `KVStoreService` running
+on a KVStore Server if needed. Note that you can also set the `FazService` to use a local 
+`KVStore` instead of a remote `KVStoreService`. We just describe the case of remote service
+here for generality.
+
+7. The RPC is made through a gRPC stub embedded in a `KVStoreClient`.
+
+8. The `KVStoreService` will call its `put()`/`get()`/`remove()` function accordingly to
+interact with the underlying `KVStore`.
+
+9. The `KVStore` returns results to the caller.
+
+10. The `KVStoreService` sends back response message to the Caw handler function.
+
+11. The response message is sent through the gRPC stub.
+
+12. The Caw handler function returns on completion.
+
+13. The `FazService` sends back response message to the `CawClient`.
+
+14. The response message is sent through the gRPC stub.
+
+15. The `CawClient` returns results to the main function.
+
+16. The command-line tool will display messages to you via standard output based on the results.
 
 ## Pre-reqs
 To build and run this app locally you will need a few things:
@@ -20,7 +77,7 @@ To build and run this app locally you will need a few things:
 - Install **gRPC** and **Protobuf**
 
 ## Build
-```bash
+```
 mkdir build && cd build
 cmake ..
 make
