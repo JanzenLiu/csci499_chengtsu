@@ -43,12 +43,17 @@ ElemsEq(vector<T>&& expected,
   return ::testing::AssertionSuccess();
 }
 
+// A test fixture for testing of Caw handler functions.
+// It encapsulates the packing and unpacking of the generic gRPC
+// request and response messages, and the calling of the
+// corresponding Caw handler functions.
 class CawHandlerTest : public ::testing::Test {
  protected:
   void SetUp() override {
     kvstore_.reset(new KVStore);
   }
 
+  // Calls `caw::handler::RegisterUser()` and returns the status.
   Status RegisterUser(const string& username) {
     caw::RegisteruserRequest request;
     request.set_username(username);
@@ -58,6 +63,7 @@ class CawHandlerTest : public ::testing::Test {
     return caw::handler::RegisterUser(&in, &out, kvstore_.get());
   }
 
+  // Calls `caw::handler::Follow()` and returns the status.
   Status Follow(const string& username, const string& to_follow) {
     caw::FollowRequest request;
     request.set_username(username);
@@ -68,6 +74,7 @@ class CawHandlerTest : public ::testing::Test {
     return caw::handler::Follow(&in, &out, kvstore_.get());
   }
 
+  // Calls `caw::handler::Profile()` and returns the status.
   Status Profile(const string& username, caw::ProfileReply* response) {
     caw::ProfileRequest request;
     request.set_username(username);
@@ -79,9 +86,13 @@ class CawHandlerTest : public ::testing::Test {
     return status;
   }
 
+  // KVStoreInterface through which the Caw handler functions
+  // interact with the actual KVStore.
   std::unique_ptr<KVStoreInterface> kvstore_;
 };
 
+// Tests the correctness of the return status of
+// `caw::handler::RegisterUser()`.
 TEST_F(CawHandlerTest, RegisterUserTest) {
   // Register new users.
   EXPECT_TRUE(RegisterUser("eren").ok());
@@ -92,6 +103,8 @@ TEST_F(CawHandlerTest, RegisterUserTest) {
   EXPECT_TRUE(RegisterUser("Mikasa").ok());
 }
 
+// Tests the correctness of the return status of
+// `caw::handler::Follow()`.
 TEST_F(CawHandlerTest, FollowTest) {
   // An non-existent user follows another non-existent user.
   EXPECT_EQ(Follow("mikasa", "eren").error_code(), NOT_FOUND);
@@ -112,7 +125,11 @@ TEST_F(CawHandlerTest, FollowTest) {
   EXPECT_TRUE(Follow("eren", "mikasa").ok());
 }
 
-TEST_F(CawHandlerTest, ProfileTest) {
+// Tests the functionality (side effect) of the user related Caw
+// functions: `caw::handler::RegisterUser()`, `caw::handler::Follow()`
+// and `caw::handler::Profile()`, and the return status of
+// `caw::handler::Profile()`.
+TEST_F(CawHandlerTest, UserFuncsTest) {
   caw::ProfileReply response;
 
   // Non-existent user.
