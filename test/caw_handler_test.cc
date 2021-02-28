@@ -1,5 +1,6 @@
 #include "caw/caw_handler.h"
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <set>
@@ -43,6 +44,12 @@ ElemsEq(vector<T>&& expected,
   return ::testing::AssertionSuccess();
 }
 
+// Returns number of microseconds passed since beginning of UNIX epoch.
+int64_t GetCurrentTimestamp() {
+  return std::chrono::duration_cast<std::chrono::microseconds>(
+      std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
 // A test fixture for testing of Caw handler functions.
 // It encapsulates the packing and unpacking of the generic gRPC
 // request and response messages, and the calling of the
@@ -84,6 +91,62 @@ class CawHandlerTest : public ::testing::Test {
     Status status = caw::handler::Profile(&in, &out, kvstore_.get());
     out.UnpackTo(response);
     return status;
+  }
+
+  // Calls `caw::handler::Caw()` and returns the status.
+  Status Caw(const string& username, const string& text,
+             const string& parent_id, caw::Caw* caw) {
+    caw::CawRequest request;
+    request.set_username(username);
+    request.set_text(text);
+    request.set_parent_id(parent_id);
+    Any in;
+    in.PackFrom(request);
+    Any out;
+    Status status = caw::handler::Caw(&in, &out, kvstore_.get());
+    caw::CawReply response;
+    out.UnpackTo(&response);
+    if (response.has_caw()) {
+      caw->CopyFrom(response.caw());
+    }
+    return status;
+  }
+
+  // Tests whether a caw::Caw message is as expected.
+  ::testing::AssertionResult
+  CawCorrect(const string& expected_username, const string& expected_text,
+             const string& expected_parent_id,
+             const int64_t expected_time_lowerbound,
+             const int64_t expected_time_upperbound,
+             const caw::Caw& actual){
+    if (expected_username != actual.username()) {
+      return ::testing::AssertionFailure()
+          << "actual.username() (" << actual.username() << ") != "
+          << expected_username;
+    }
+    if (expected_text != actual.text()) {
+      return ::testing::AssertionFailure()
+          << "actual.text() (" << actual.text() << ") != " << expected_text;
+    }
+    if (expected_parent_id != actual.parent_id()) {
+      return ::testing::AssertionFailure()
+          << "actual.parent_id() (" << actual.parent_id() << ") != "
+          << (expected_parent_id.empty()? "(empty)":expected_parent_id);
+    }
+    int64_t us = actual.timestamp().useconds();
+    int64_t s = actual.timestamp().seconds();
+    if (us < expected_time_lowerbound || us > expected_time_upperbound) {
+      return ::testing::AssertionFailure()
+          << "actual.timestamp().useconds() (" << us << ") is not between "
+          << "request send time and response receive time";
+    }
+    if (s != us / 1000000) {
+      return ::testing::AssertionFailure()
+          << "relationship between actual.timestamp().useconds() (" << us
+          << ") and actual.timestamp().seconds() (" << s << ") does not make"
+          << "sense";
+    }
+    return ::testing::AssertionSuccess();
   }
 
   // KVStoreInterface through which the Caw handler functions
@@ -170,4 +233,38 @@ TEST_F(CawHandlerTest, UserFuncsTest) {
   EXPECT_TRUE(ElemsEq({"eren"}, response.following()));
   EXPECT_TRUE(Profile("eren", &response).ok());
   EXPECT_TRUE(ElemsEq({"mikasa"}, response.followers()));
+}
+
+// Tests the correctness of the return status and
+// Caw message of `caw::handler::Caw()`.
+TEST_F(CawHandlerTest, CawTest) {
+  caw::Caw caw;
+  Status status;
+  string parent_id;
+  int64_t callTime;  // time calling the wrapper function.
+  int64_t returnTime;  // time getting return from the wrapper function.
+
+  // Non-existent user.
+  status = Caw("reiner", "I am the Armored Titan", "", &caw);
+  EXPECT_EQ(status.error_code(), NOT_FOUND);
+
+  RegisterUser("reiner");
+  // Non-existent caw to reply.
+  status = Caw("reiner", "He is the Colossal Titan", "fake12345", &caw);
+  EXPECT_EQ(status.error_code(), NOT_FOUND);
+  // Caw without parent.
+  callTime = GetCurrentTimestamp();
+  EXPECT_TRUE(Caw("reiner", "Come with us", "", &caw).ok());
+  returnTime = GetCurrentTimestamp();
+  EXPECT_TRUE(CawCorrect(
+      "reiner", "Come with us", "", callTime, returnTime, caw));
+
+  RegisterUser("bertholdt");
+  // Caw replying some other Caw.
+  callTime = GetCurrentTimestamp();
+  parent_id = caw.id();
+  EXPECT_TRUE(Caw("bertholdt", "Are we doing it?", parent_id, &caw).ok());
+  returnTime = GetCurrentTimestamp();
+  EXPECT_TRUE(CawCorrect("bertholdt", "Are we doing it?", parent_id,
+                         callTime, returnTime, caw));
 }
