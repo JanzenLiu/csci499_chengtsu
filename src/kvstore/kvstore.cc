@@ -33,12 +33,7 @@ vector<string> KVStore::Get(const string& key) const {
 
 bool KVStore::Put(const string& key, const string& value) {
   std::unique_lock<std::shared_mutex> lock(mutex_);
-  auto iter = map_.find(key);
-  if (iter != map_.end()) {  // The key already exists.
-    iter->second.push_back(value);
-    return false;
-  }
-  map_[key] = {value};
+  map_[key].push_back(value);
   return true;
 }
 

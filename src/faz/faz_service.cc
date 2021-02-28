@@ -1,4 +1,4 @@
-#include "faz_service.h"
+#include "faz/faz_service.h"
 
 #include <grpcpp/grpcpp.h>
 
@@ -20,7 +20,8 @@ using std::unordered_map;
 // Initialize the predefined table of known functions.
 const unordered_map<string, FazFunc> FazServiceImpl::kPredefinedFuncs = {
     {"RegisterUser", caw::handler::RegisterUser},
-    {"Follow", caw::handler::Follow}};
+    {"Follow", caw::handler::Follow},
+    {"Profile", caw::handler::Profile}};
 
 Status FazServiceImpl::hook(
     ServerContext* context,
@@ -60,5 +61,5 @@ Status FazServiceImpl::event(
                   "Function not found in registered functions.");
   }
   FazFunc func = iter->second;
-  return func(&payload, response->mutable_payload(), &kvstore_);
+  return func(&payload, response->mutable_payload(), kvstore_.get());
 }

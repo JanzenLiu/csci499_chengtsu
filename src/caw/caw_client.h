@@ -2,11 +2,13 @@
 #define CSCI499_CHENGTSU_CAW_CLIENT_H
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
 #include <grpcpp/grpcpp.h>
 
+#include "caw.pb.h"
 #include "faz.grpc.pb.h"
 
 // A client to make RPC to the remote Faz gRPC service on
@@ -14,7 +16,7 @@
 class CawClient {
  public:
   // Caw event types to register with the corresponding functions.
-  enum EventType { kRegisterUser, kFollow };
+  enum EventType { kRegisterUser, kFollow, kProfile };
 
   CawClient(std::shared_ptr<grpc::Channel> channel)
       : stub_(faz::FazService::NewStub(channel)) {}
@@ -32,6 +34,10 @@ class CawClient {
   // Sends an `EventType::kFollow` event to Faz, and
   // returns true on success.
   bool Follow(const std::string& username, const std::string& to_follow);
+
+  // Sends an `EventType::kProfile` event to Faz, and returns a
+  // ProfileReply message containing the desired information on success.
+  std::optional<caw::ProfileReply> Profile(const std::string& username);
 
  private:
   // Table that maps a Caw event type to the predefined function

@@ -28,7 +28,7 @@ namespace handler {
 // See <project_root>/protos/caw.proto for more details.
 grpc::Status RegisterUser(const google::protobuf::Any *in,
                           google::protobuf::Any *out,
-                          KVStoreClient *kvstore);
+                          KVStoreInterface *kvstore);
 
 // Lets a given user follow another given user.
 // @param in: Carries a `RegisteruserRequest` message.
@@ -36,9 +36,17 @@ grpc::Status RegisterUser(const google::protobuf::Any *in,
 // See <project_root>/protos/caw.proto for more details.
 grpc::Status Follow(const google::protobuf::Any *in,
                     google::protobuf::Any *out,
-                    KVStoreClient *kvstore);
+                    KVStoreInterface *kvstore);
 
-}
-};
+// Gets a given user’s profile of following and followers.
+// @param in: Carries a `ProfileRequest` message.
+// @param out: Carries a `ProfileReply` message.
+// See <project_root>/protos/caw.proto for more details.
+grpc::Status Profile(const google::protobuf::Any *in,
+                     google::protobuf::Any *out,
+                     KVStoreInterface *kvstore);
+
+}  // namespace handler
+}  // namespace caw
 
 #endif //CSCI499_CHENGTSU_CAW_HANDLER_H

@@ -4,6 +4,7 @@
 #include <gflags/gflags.h>
 #include <grpcpp/grpcpp.h>
 
+#include "caw.pb.h"
 #include "caw/caw_client.h"
 
 using std::cout;
@@ -29,6 +30,25 @@ DEFINE_bool(profile, false, "Gets the user’s profile of following and follower
 DEFINE_bool(hook_all, false, "Hooks all Caw functions to the Faz layer.");
 DEFINE_bool(unhook_all, false, "Unhooks all Caw functions from the Faz layer.");
 DEFINE_validator(port, &ValidatePort);
+
+// Outputs a ProfileReply message to an output stream.
+ostream& operator<<(ostream& os, const caw::ProfileReply& profile) {
+  os << "{" << endl;
+  // Output the following list.
+  os << "  following (size=" << profile.following_size() << "): [ ";
+  for (std::string other : profile.following()) {
+    os << other << ", ";
+  }
+  os << "]" << endl;
+  // Output the follower list.
+  os << "  followers (size=" << profile.followers_size() << "): [ ";
+  for (std::string other : profile.followers()) {
+    os << other << ", ";
+  }
+  os << "]" << endl;
+  os << "}";
+  return os;
+}
 
 int main(int argc, char *argv[]) {
   gflags::SetUsageMessage("Caw command-line tool Usage");
@@ -59,6 +79,17 @@ int main(int argc, char *argv[]) {
       cout << "You need to login to follow a user." << endl;
     } else {
       client.Follow(FLAGS_user, FLAGS_follow);
+    }
+  }
+  // Handle flag --profile.
+  if (FLAGS_profile) {
+    if (FLAGS_user.empty()) {
+      cout << "You need to login to get the user's profile." << endl;
+    } else {
+      auto profile = client.Profile(FLAGS_user);
+      if (profile.has_value()) {
+        cout << profile.value() << endl;
+      }
     }
   }
 

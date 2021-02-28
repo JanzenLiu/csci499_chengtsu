@@ -1,6 +1,7 @@
 #include "caw/caw_client.h"
 
 #include <iostream>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -22,7 +23,8 @@ using std::unordered_map;
 // Initialize the table of Caw event types and function names.
 const unordered_map<CawClient::EventType, string> CawClient::kFuncs = {
     {EventType::kRegisterUser, "RegisterUser"},
-    {EventType::kFollow, "Follow"}};
+    {EventType::kFollow, "Follow"},
+    {EventType::kProfile, "Profile"}};
 
 bool CawClient::HookAll() {
   bool success = true;
@@ -100,4 +102,28 @@ bool CawClient::Follow(const string& username, const string& to_follow) {
   }
   cout << "Successfully followed the user." << endl;
   return true;
+}
+
+std::optional<caw::ProfileReply> CawClient::Profile(
+    const string& username) {
+  // Make the inner request packed in the generic request payload.
+  caw::ProfileRequest inner_request;
+  inner_request.set_username(username);
+  // Make the generic request.
+  ClientContext context;
+  EventRequest request;
+  EventReply response;
+  request.set_event_type(EventType::kProfile);
+  request.mutable_payload()->PackFrom(inner_request);
+  // Make RPC to the Faz service.
+  Status status = stub_->event(&context, request, &response);
+  if (!status.ok()) {
+    cout << status.error_message() << endl;
+    return {};
+  }
+  // Get the ProfileReply message.
+  if (!response.has_payload()) { return {}; }
+  caw::ProfileReply inner_response;
+  response.payload().UnpackTo(&inner_response);
+  return inner_response;
 }

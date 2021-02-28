@@ -46,7 +46,7 @@ vector<string> ParseCommand(const string& command) {
 }
 
 void promptUsage() {
-  cout << "KVStore CLI Usage:" << endl
+  cout << "KVStore Shell Usage:" << endl
        << "put <key> <value>  Add a value under a key." << endl
        << "get <key>          Get all values under a key." << endl
        << "delete <key>       Delete all values under a key." << endl
@@ -75,6 +75,9 @@ int main(int argc, char** argv) {
   auto channel = grpc::CreateChannel(
       target_str, grpc::InsecureChannelCredentials());
   KVStoreClient client(channel);
+
+  cout << "Welcome to the KVStore Shell!" << endl;
+  promptUsage();
 
   // Loop until system interrupt or command to exit.
   for (string line; std::getline(std::cin, line);) {

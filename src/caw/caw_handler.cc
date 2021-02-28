@@ -20,13 +20,13 @@ const string kUserFollowersPrefix = "user_followers.";
 const string kFollowingPairPrefix = "following_pair.";
 
 // Returns true if the user exists in the KVStore.
-bool UserExists(const string& username, KVStoreClient* kvstore){
+bool UserExists(const string& username, KVStoreInterface* kvstore){
   string key = kUserPrefix + username;
   return !kvstore->Get(key).empty();
 }
 
 Status caw::handler::RegisterUser(const Any* in, Any* out,
-                                  KVStoreClient* kvstore) {
+                                  KVStoreInterface* kvstore) {
   // Unpack the request message.
   caw::RegisteruserRequest request;
   in->UnpackTo(&request);
@@ -48,7 +48,7 @@ Status caw::handler::RegisterUser(const Any* in, Any* out,
 }
 
 Status caw::handler::Follow(const Any* in, Any* out,
-                            KVStoreClient* kvstore) {
+                            KVStoreInterface* kvstore) {
   // Unpack the request message.
   caw::FollowRequest request;
   in->UnpackTo(&request);
@@ -69,7 +69,7 @@ Status caw::handler::Follow(const Any* in, Any* out,
   // Store the relationship to the KVStore.
   if (!kvstore->Put(key, "")) {
     return Status(StatusCode::UNAVAILABLE,
-                  "Failed to add following to the kvstore.");
+                  "Failed to add the following pair to the kvstore.");
   }
   key = kUserFollowingsPrefix + username;
   if (!kvstore->Put(key, to_follow)) {
@@ -90,6 +90,31 @@ Status caw::handler::Follow(const Any* in, Any* out,
   }
   // Pack the response message.
   caw::FollowReply response;
+  out->PackFrom(response);
+  return Status::OK;
+}
+
+Status caw::handler::Profile(const Any *in, Any *out,
+                             KVStoreInterface *kvstore) {
+  // Unpack the request message.
+  caw::ProfileRequest request;
+  in->UnpackTo(&request);
+  string username = request.username();
+  // Check the existence of the user.
+  if (!UserExists(username, kvstore)) {
+    return Status(StatusCode::NOT_FOUND, "User not found.");
+  }
+  // Get followings and followers from the KVStore and
+  // put them into the response message.
+  ProfileReply response;
+  string key = kUserFollowingsPrefix + username;
+  for (string& other : kvstore->Get(key)) {
+    response.add_following(other);
+  }
+  key = kUserFollowersPrefix + username;
+  for (string& other : kvstore->Get(key)) {
+    response.add_followers(other);
+  }
   out->PackFrom(response);
   return Status::OK;
 }

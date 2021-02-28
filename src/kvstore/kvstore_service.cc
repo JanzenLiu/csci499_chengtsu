@@ -19,7 +19,10 @@ using std::string;
 
 Status KeyValueStoreServiceImpl::put(
     ServerContext* context, const PutRequest* request, PutReply* response) {
-  store_.Put(request->key(), request->value());
+  if (!store_.Put(request->key(), request->value())) {
+    return Status(StatusCode::UNAVAILABLE,
+                  "Failed to add the value to the key.");
+  }
   return Status::OK;
 }
 
