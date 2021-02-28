@@ -16,7 +16,7 @@
 class CawClient {
  public:
   // Caw event types to register with the corresponding functions.
-  enum EventType { kRegisterUser, kFollow, kProfile };
+  enum EventType { kRegisterUser, kFollow, kProfile, kCaw, kRead };
 
   CawClient(std::shared_ptr<grpc::Channel> channel)
       : stub_(faz::FazService::NewStub(channel)) {}
@@ -38,6 +38,16 @@ class CawClient {
   // Sends an `EventType::kProfile` event to Faz, and returns a
   // ProfileReply message containing the desired information on success.
   std::optional<caw::ProfileReply> Profile(const std::string& username);
+
+  // Sends an `EventType::kCaw` event to Faz, and returns the Caw
+  // message posted on success.
+  std::optional<caw::Caw> Caw(const std::string& username,
+                              const std::string& text,
+                              const std::string& parent_id = "");
+
+  // Sends an `EventType::kRead` event to Faz, and returns Caw
+  // messages of all threads read.
+  std::vector<caw::Caw> Read(const std::string& caw_id);
 
  private:
   // Table that maps a Caw event type to the predefined function

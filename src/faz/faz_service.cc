@@ -21,7 +21,9 @@ using std::unordered_map;
 const unordered_map<string, FazFunc> FazServiceImpl::kPredefinedFuncs = {
     {"RegisterUser", caw::handler::RegisterUser},
     {"Follow", caw::handler::Follow},
-    {"Profile", caw::handler::Profile}};
+    {"Profile", caw::handler::Profile},
+    {"Caw", caw::handler::Caw},
+    {"Read", caw::handler::Read}};
 
 Status FazServiceImpl::hook(
     ServerContext* context,

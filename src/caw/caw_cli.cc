@@ -1,3 +1,5 @@
+#include <ctime>
+#include <iomanip>
 #include <iostream>
 #include <string>
 
@@ -50,6 +52,21 @@ ostream& operator<<(ostream& os, const caw::ProfileReply& profile) {
   return os;
 }
 
+// Outputs a Caw message to an output stream.
+ostream& operator<<(ostream& os, const caw::Caw& caw) {
+  std::string parent_id = caw.parent_id();
+  if (parent_id.empty()) { parent_id = "null"; }
+  std::time_t t = caw.timestamp().seconds();
+  os << "{" << endl
+     << "  username: " << caw.username() << "," << endl
+     << "  text: " << caw.text() << ","  << endl
+     << "  id: " << caw.id() << ","  << endl
+     << "  parent_id: " << parent_id << ","  << endl
+     << "  time: " << std::asctime(std::localtime(&t)) << endl
+     << "}";
+  return os;
+}
+
 int main(int argc, char *argv[]) {
   gflags::SetUsageMessage("Caw command-line tool Usage");
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -90,6 +107,29 @@ int main(int argc, char *argv[]) {
       if (profile.has_value()) {
         cout << profile.value() << endl;
       }
+    }
+  }
+  // Handle flag --caw.
+  if (!FLAGS_caw.empty()) {
+    if (FLAGS_user.empty()) {
+      cout << "You need to login to post a caw." << endl;
+    } else {
+      auto caw = client.Caw(FLAGS_user, FLAGS_caw, FLAGS_reply);
+      if (caw.has_value()) {
+        cout << "Successfully posted the caw." << endl
+             << caw.value() << endl;
+      }
+    }
+  }
+  // Handle flag --reply.
+  if (!FLAGS_reply.empty() && FLAGS_caw.empty()) {
+    cout << "You need to give the content with --caw to post a reply." << endl;
+  }
+  // Handle flag --read
+  if (!FLAGS_read.empty()) {
+    auto caws = client.Read(FLAGS_read);
+    for (auto& caw : caws) {
+      cout << caw << endl;
     }
   }
 
