@@ -1,7 +1,11 @@
 #include "caw/caw_handler.h"
 
+#include <chrono>
+#include <cstdlib>
+#include <deque>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <glog/logging.h>
 
@@ -13,16 +17,42 @@ using grpc::StatusCode;
 using std::endl;
 using std::string;
 using std::to_string;
+using std::vector;
 
 const string kUserPrefix = "user.";
 const string kUserFollowingsPrefix = "user_followings.";
 const string kUserFollowersPrefix = "user_followers.";
 const string kFollowingPairPrefix = "following_pair.";
+const string kCawPrefix = "caw.";
+const string kReplyPrefix = "caw_reply.";
 
 // Returns true if the user exists in the KVStore.
 bool UserExists(const string& username, KVStoreInterface* kvstore){
   string key = kUserPrefix + username;
   return !kvstore->Get(key).empty();
+}
+
+// Returns true if the caw exists in the KVStore.
+bool CawExists(const string& caw_id, KVStoreInterface* kvstore) {
+  string key = kCawPrefix + caw_id;
+  return !kvstore->Get(key).empty();
+}
+
+// Returns number of microseconds passed since beginning of UNIX epoch.
+int64_t GetMicrosecondsSinceEpoch() {
+  return std::chrono::duration_cast<std::chrono::microseconds>(
+      std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+// Returns a randomly generated ID, which is of the given length and
+// each digit is sampled from 0-9 plus a-f (inclusive).
+string GenerateRandomID(int length) {
+  const char *digits = "0123456789abcdef";
+  string res(length, ' ');
+  for (int i = 0; i < length; ++i) {
+    res[i] = digits[rand() % 16];
+  }
+  return res;
 }
 
 Status caw::handler::RegisterUser(const Any* in, Any* out,
@@ -115,6 +145,105 @@ Status caw::handler::Profile(const Any *in, Any *out,
   for (string& other : kvstore->Get(key)) {
     response.add_followers(other);
   }
+  out->PackFrom(response);
+  return Status::OK;
+}
+
+Status caw::handler::Caw(const Any *in, Any *out,
+                         KVStoreInterface *kvstore) {
+  // Unpack the request message.
+  caw::CawRequest request;
+  in->UnpackTo(&request);
+  string username = request.username();
+  string text = request.text();
+  string parent_id = request.parent_id();
+  // Check the existence of the user.
+  if (!UserExists(username, kvstore)) {
+    return Status(StatusCode::NOT_FOUND, "User not found.");
+  }
+  // Check the existence of the caw to reply (if specified).
+  if (!parent_id.empty() && !CawExists(parent_id, kvstore)) {
+    return Status(StatusCode::NOT_FOUND, "Caw to reply not found.");
+  }
+  // Generate required information and make the Caw message.
+  int64_t us = GetMicrosecondsSinceEpoch();
+  Timestamp* timestamp = new Timestamp();
+  timestamp->set_seconds(us / 1000000);
+  timestamp->set_useconds(us);
+  string id = to_string(us) + "-" + GenerateRandomID(4);  // caw id.
+  caw::Caw* caw = new caw::Caw();
+  caw->set_username(username);
+  caw->set_text(text);
+  caw->set_id(id);
+  caw->set_parent_id(parent_id);
+  caw->set_allocated_timestamp(timestamp);
+  // Store the caw to the KVStore.
+  string key = kCawPrefix + id;
+  if (!kvstore->Put(key, caw->SerializeAsString())) {
+    return Status(StatusCode::UNAVAILABLE,
+                  "Failed to add caw post to the kvstore.");
+  }
+  if (!parent_id.empty()) {
+    key = kReplyPrefix + parent_id;
+    if (!kvstore->Put(key, id)) {
+      return Status(StatusCode::UNAVAILABLE,
+                    "Failed to add caw post to the kvstore.");
+    }
+  }
+  // Pack the response message.
+  caw::CawReply response;
+  response.set_allocated_caw(caw);
+  out->PackFrom(response);
+  return Status::OK;
+}
+
+Status caw::handler::Read(const Any *in, Any *out,
+                          KVStoreInterface *kvstore) {
+  // Unpack the request message.
+  caw::ReadRequest request;
+  in->UnpackTo(&request);
+  string caw_id = request.caw_id();
+  // Check the existence of the caw.
+  if (!CawExists(caw_id, kvstore)) {
+    return Status(StatusCode::NOT_FOUND,
+                  "Caw " + caw_id + " not found.");
+  }
+  // Find all threads starting at the given caw and put them
+  // into the caw::ReadReply message in a BFS approach.
+  caw::ReadReply response;
+  std::deque<string> q;  // Queue of threads to read.
+  q.push_back(caw_id);
+  while (!q.empty()) {
+    bool current_caw_success = false;
+    string current_caw_id = q.front();
+    q.pop_front();
+    string key = kCawPrefix + current_caw_id;
+    vector<string> values = kvstore->Get(key);
+    if (values.size() == 1) {
+      // Add the Caw message and populate it with the
+      // information retrieved from the KVStore.
+      caw::Caw* caw = response.add_caws();
+      string caw_str = values[0];
+      if (caw->ParseFromString(caw_str)) {
+        // Get reply ids and add into the queue.
+        key = kReplyPrefix + current_caw_id;
+        vector<string> reply_caw_ids = kvstore->Get(key);
+        q.insert(q.end(), reply_caw_ids.begin(), reply_caw_ids.end());
+        current_caw_success = true;
+      } else {
+        LOG(ERROR) << "Error decoding caw " << current_caw_id << "." << endl;
+      }
+    } else {
+      LOG(ERROR) << "Error finding caw " << current_caw_id << ": "
+        << values.size() << " records found, expected 1." << endl;
+    }
+    // Notify failure.
+    if (!current_caw_success) {
+      return Status(StatusCode::UNAVAILABLE,
+                    "Error reading caw " + current_caw_id + ".");
+    }
+  }
+  // Pack the response message.
   out->PackFrom(response);
   return Status::OK;
 }

@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <grpcpp/grpcpp.h>
 
@@ -19,12 +20,15 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::unordered_map;
+using std::vector;
 
 // Initialize the table of Caw event types and function names.
 const unordered_map<CawClient::EventType, string> CawClient::kFuncs = {
     {EventType::kRegisterUser, "RegisterUser"},
     {EventType::kFollow, "Follow"},
-    {EventType::kProfile, "Profile"}};
+    {EventType::kProfile, "Profile"},
+    {EventType::kCaw, "Caw"},
+    {EventType::kRead, "Read"}};
 
 bool CawClient::HookAll() {
   bool success = true;
@@ -126,4 +130,56 @@ std::optional<caw::ProfileReply> CawClient::Profile(
   caw::ProfileReply inner_response;
   response.payload().UnpackTo(&inner_response);
   return inner_response;
+}
+
+std::optional<caw::Caw> CawClient::Caw(
+    const string& username, const string& text,
+    const string& parent_id) {
+  // Make the inner request packed in the generic request payload.
+  caw::CawRequest inner_request;
+  inner_request.set_username(username);
+  inner_request.set_text(text);
+  inner_request.set_parent_id(parent_id);
+  // Make the generic request.
+  ClientContext context;
+  EventRequest request;
+  EventReply response;
+  request.set_event_type(EventType::kCaw);
+  request.mutable_payload()->PackFrom(inner_request);
+  // Make RPC to the Faz service.
+  Status status = stub_->event(&context, request, &response);
+  if (!status.ok()) {
+    cout << status.error_message() << endl;
+    return {};
+  }
+  // Get the Caw message.
+  if (!response.has_payload()) { return {}; }
+  caw::CawReply inner_response;
+  response.payload().UnpackTo(&inner_response);
+  if (!inner_response.has_caw()) { return {}; }
+  return inner_response.caw();
+}
+
+vector<caw::Caw> CawClient::Read(const string &caw_id) {
+  // Make the inner request packed in the generic request payload.
+  caw::ReadRequest inner_request;
+  inner_request.set_caw_id(caw_id);
+  // Make the generic request.
+  ClientContext context;
+  EventRequest request;
+  EventReply response;
+  request.set_event_type(EventType::kRead);
+  request.mutable_payload()->PackFrom(inner_request);
+  // Make RPC to the Faz service.
+  Status status = stub_->event(&context, request, &response);
+  if (!status.ok()) {
+    cout << status.error_message() << endl;
+    return {};
+  }
+  // Get the Caw message.
+  if (!response.has_payload()) { return {}; }
+  caw::ReadReply inner_response;
+  response.payload().UnpackTo(&inner_response);
+  auto& caws = inner_response.caws();
+  return vector<caw::Caw>(caws.begin(), caws.end());
 }

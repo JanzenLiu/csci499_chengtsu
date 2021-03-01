@@ -46,6 +46,22 @@ grpc::Status Profile(const google::protobuf::Any *in,
                      google::protobuf::Any *out,
                      KVStoreInterface *kvstore);
 
+// Posts a caw on behalf of a given user.
+// @param in: Carries a `CawRequest` message.
+// @param out: Carries a `CawReply` message.
+// See <project_root>/protos/caw.proto for more details.
+grpc::Status Caw(const google::protobuf::Any *in,
+                 google::protobuf::Any *out,
+                 KVStoreInterface *kvstore);
+
+// Gets the caw thread starting at the given id.
+// @param in: Carries a `ReadRequest` message.
+// @param out: Carries a `ReadReply` message.
+// See <project_root>/protos/caw.proto for more details.
+grpc::Status Read(const google::protobuf::Any *in,
+                  google::protobuf::Any *out,
+                  KVStoreInterface *kvstore);
+
 }  // namespace handler
 }  // namespace caw
 
