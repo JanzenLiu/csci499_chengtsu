@@ -134,7 +134,8 @@ To run the Caw handler function test
 ./caw_handler_test
 ```
 
-To run the KVStore shell to do interactive testing.
+To run the KVStore shell to do interactive testing. It will prompt usage after
+you run the below command, just follow the usage message.
 Note that you can even run this when the other executables are running to 
 inspect the content of the KVStore, or even update the content to create
 some extreme cases (for example, a posted caw accidentally lost in the database).
