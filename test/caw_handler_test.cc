@@ -112,13 +112,27 @@ class CawHandlerTest : public ::testing::Test {
     return status;
   }
 
+  // Calls `caw::handler::Read()` and returns the status.
+  Status Read(const string& caw_id, vector<caw::Caw>& caws) {
+    caw::ReadRequest request;
+    request.set_caw_id(caw_id);
+    Any in;
+    in.PackFrom(request);
+    Any out;
+    Status status = caw::handler::Read(&in, &out, kvstore_.get());
+    caw::ReadReply response;
+    out.UnpackTo(&response);
+    caws.assign(response.caws().begin(), response.caws().end());
+    return status;
+  }
+
   // Tests whether a caw::Caw message is as expected.
   ::testing::AssertionResult
-  CawCorrect(const string& expected_username, const string& expected_text,
-             const string& expected_parent_id,
-             const int64_t expected_time_lowerbound,
-             const int64_t expected_time_upperbound,
-             const caw::Caw& actual){
+  CawIsCorrect(const string& expected_username, const string& expected_text,
+               const string& expected_parent_id,
+               const int64_t expected_time_lowerbound,
+               const int64_t expected_time_upperbound,
+               const caw::Caw& actual){
     if (expected_username != actual.username()) {
       return ::testing::AssertionFailure()
           << "actual.username() (" << actual.username() << ") != "
@@ -256,7 +270,7 @@ TEST_F(CawHandlerTest, CawTest) {
   callTime = GetCurrentTimestamp();
   EXPECT_TRUE(Caw("reiner", "Come with us", "", &caw).ok());
   returnTime = GetCurrentTimestamp();
-  EXPECT_TRUE(CawCorrect(
+  EXPECT_TRUE(CawIsCorrect(
       "reiner", "Come with us", "", callTime, returnTime, caw));
 
   RegisterUser("bertholdt");
@@ -265,6 +279,93 @@ TEST_F(CawHandlerTest, CawTest) {
   parent_id = caw.id();
   EXPECT_TRUE(Caw("bertholdt", "Are we doing it?", parent_id, &caw).ok());
   returnTime = GetCurrentTimestamp();
-  EXPECT_TRUE(CawCorrect("bertholdt", "Are we doing it?", parent_id,
-                         callTime, returnTime, caw));
+  EXPECT_TRUE(CawIsCorrect("bertholdt", "Are we doing it?", parent_id,
+                           callTime, returnTime, caw));
+}
+
+// Tests the functionality (side effect) of the caw related Caw
+// functions: `caw::handler::Caw()`, `caw::handler::Read()`,
+// and the return status of `caw::handler::Read()`.
+TEST_F(CawHandlerTest, CawFuncsTest) {
+  vector<caw::Caw> caws;
+
+  // Non-existent caw.
+  EXPECT_EQ(Read("fake12345", caws).error_code(), NOT_FOUND);
+
+  // Make caws:
+  //       0
+  //      / \
+  //     1   2
+  //    / \   \
+  //   /| |\   7
+  //  3 4 5 6   \
+  //             8
+  //              \
+  //               9
+  RegisterUser("reiner");
+  RegisterUser("bertholdt");
+  RegisterUser("eren");
+  vector<string> caw_ids;
+
+  // Calls `CawHandlerTest::Caw()` to post a caw with the given information,
+  // and add the id of the created caw to the vector `caw_ids`.
+  auto addCaw = [&caw_ids, this](const string& username, const string& text,
+                                 const string& parent_id) {
+    caw::Caw caw;
+    Caw(username, text, parent_id, &caw);
+    caw_ids.push_back(caw.id());
+  };
+  addCaw("reiner", "I am the Armored Titan", "");  // caw 0
+  addCaw("reiner", "He is the Colossal Titan", caw_ids[0]);  // caw 1
+  addCaw("reiner", "Come with us", caw_ids[0]);  // caw 2
+  addCaw("bertholdt", "Reiner!", caw_ids[1]);  // caw 3
+  addCaw("bertholdt", "Are we doing it?", caw_ids[1]);  // caw 4
+  addCaw("bertholdt", "Right now?!", caw_ids[1]);  // caw 5
+  addCaw("bertholdt", "Right here?!", caw_ids[1]);  // caw 6
+  addCaw("reiner", " I see", caw_ids[2]);  // caw 7
+  addCaw("reiner", " I've just... been here way too long",
+         caw_ids[7]);  // caw 8
+  addCaw("eren", "Sit down Reiner", caw_ids[8]);  // caw 9
+
+  // Since we have examined the content of posted caws in the previous test,
+  // we only examine the ids here.
+
+  // Tests whether a vector of `caw::Caw` contains and only
+  // contains the caws with expected ids, regardless of the order.
+  auto cawIdsEq = [&caw_ids](const vector<int>& expected_indices,
+                             const vector<caw::Caw>& actual) {
+    if (expected_indices.size() != actual.size()) {
+      return ::testing::AssertionFailure()
+          << "actual.size() (" << actual.size() << ") != "
+          << "expected_indices.size() (" << expected_indices.size() << ")";
+    }
+    set<string> actual_ids;
+    for (auto& caw : actual) {
+      actual_ids.insert(caw.id());
+    }
+    for (int i : expected_indices){
+      string expected_id = caw_ids[i];
+      if (!actual_ids.count(expected_id)){
+        return ::testing::AssertionFailure()
+            << "expected caw " << i << " is not in actual.";
+      }
+    }
+    return ::testing::AssertionSuccess();
+  };
+
+  // Caw without replies.
+  EXPECT_TRUE(Read(caw_ids[9], caws).ok());
+  EXPECT_TRUE(cawIdsEq({9}, caws));
+  // Caw with one direct reply only.
+  EXPECT_TRUE(Read(caw_ids[8], caws).ok());
+  EXPECT_TRUE(cawIdsEq({8, 9}, caws));
+  // Caw with multiple direct replies.
+  EXPECT_TRUE(Read(caw_ids[1], caws).ok());
+  EXPECT_TRUE(cawIdsEq({1, 3, 4, 5, 6}, caws));
+  // Caw with one direct reply and multiple indirect replies in one branch.
+  EXPECT_TRUE(Read(caw_ids[2], caws).ok());
+  EXPECT_TRUE(cawIdsEq({2, 7, 8, 9}, caws));
+  // Caw with multiple direct and indirect replies in multiple branches.
+  EXPECT_TRUE(Read(caw_ids[0], caws).ok());
+  EXPECT_TRUE(cawIdsEq({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, caws));
 }
