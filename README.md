@@ -63,6 +63,11 @@ cmake ..
 make
 ```
 
+If you are using vagrant and the provisioning script in `Vagrantfile` somehow does not work
+perfectly and causes errors when you are building or running the project, (I have tested for 
+several times to make it work well on my own machine, but I am not completely sure that works 
+perfectly for you), you may need to manually fix the errors accordingly.
+
 ## Usage <a name = "usage"></a>
 To get the Caw platform work, you need to first start the KVStore server, 
 and then start the FaaS server. Then you can use the Caw command-line tool
