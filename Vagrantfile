@@ -71,28 +71,36 @@ Vagrant.configure("2") do |config|
     sudo apt install -y build-essential autoconf libtool pkg-config
     sudo apt install -y clang
     sudo apt install -y cmake
-    wget https://github.com/gflags/gflags/archive/v2.2.2.tar.gz
-    tar xzf v2.2.2.tar.gz
-    cd gflags-2.2.2/
-    mkdir build && cd build
-    cmake -DBUILD_SHARED_LIBS=True ..
-    make
-    sudo make install
-    cd ~/
     git clone https://github.com/google/glog.git
     cd glog/
     cmake -H. -B build -G "Unix Makefiles"
     cmake --build build
     sudo cmake --build build --target install
     cd ~/
+    wget https://github.com/gflags/gflags/archive/v2.2.2.tar.gz
+    tar xzf v2.2.2.tar.gz
+    cd gflags-2.2.2/
+    mkdir build && cd build
+    cmake -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DBUILD_gflags_LIB=ON ..
+    make
+    sudo make install
+    cd ~/
+    git clone https://github.com/google/googletest.git -b release-1.10.0
+    cd googletest
+    mkdir build
+    cd build
+    cmake -DBUILD_SHARED_LIBS=ON ..
+    make
+    sudo make install
+    cd ~/
     git clone --recurse-submodules -b v1.35.0 https://github.com/grpc/grpc
     cd grpc
     mkdir -p cmake/build
     cd cmake/build
     cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ../..
-    make -j2
+    make -j4
     sudo make install
     cd ~/
-    sudo apt install -y libgflags-dev libgtest-dev
+    sudo apt install -y libgtest-dev
   SHELL
 end
