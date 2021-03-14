@@ -147,7 +147,8 @@ func (c *CawClient) Follow(username, toFollow string) bool {
     return true
 }
 
-// Sends an `Follow` event to Faz and returns true on success.
+// Sends an `Profile` event to Faz and returns a `ProfileReply`
+// message containing the desired information on success.
 func (c *CawClient) Profile(username string) *caw.ProfileReply {
     // Make the inner request packed in the generic request payload.
     innerRequest := caw.ProfileRequest{
@@ -183,4 +184,44 @@ func (c *CawClient) Profile(username string) *caw.ProfileReply {
         return nil
     }
     return innerResponse
+}
+
+// Sends an `Caw` event to Faz and returns the Caw message posted on success.
+func (c *CawClient) Caw(username, text, parentId string) *caw.Caw {
+    // Make the inner request packed in the generic request payload.
+    innerRequest := caw.CawRequest{
+        Username: username,
+        Text: text,
+        ParentId: []byte(parentId),
+    }
+    // Make the generic request.
+    payload, err := ptypes.MarshalAny(&innerRequest)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    request := faz.EventRequest{
+        EventType: Caw,
+        Payload: payload,
+    }
+    // Make RPC to the Faz service.
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    response, err := c.stub.Event(ctx, &request)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    // Get the Caw message.
+    payload = response.GetPayload()
+    if payload == nil {
+        return nil
+    }
+    innerResponse := new(caw.CawReply)
+    err = ptypes.UnmarshalAny(payload, innerResponse)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    return innerResponse.GetCaw()
 }

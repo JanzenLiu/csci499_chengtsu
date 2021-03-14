@@ -3,6 +3,7 @@ package main
 import (
     "flag"
     "fmt"
+    "time"
 
     "github.com/JanzenLiu/csci499_chengtsu/protos/caw"
     "google.golang.org/grpc"
@@ -22,13 +23,31 @@ var (
     unhookAll    = flag.Bool("unhook_all", false, "Unhooks all Caw functions from the Faz layer.")
 )
 
+// Outputs a `ProfileReply` message to the standard output.
 func printProfileReply(profileReply *caw.ProfileReply) {
     following := profileReply.GetFollowing()
     followers := profileReply.GetFollowers()
-    fmt.Println("{");
-    fmt.Printf( "  following (size=%d): %v\n", len(following), following)
+    fmt.Println("{")
+    fmt.Printf( "  following (size=%d): %v,\n", len(following), following)
     fmt.Printf( "  followers (size=%d): %v\n", len(followers), followers)
-    fmt.Println("}");
+    fmt.Println("}")
+}
+
+// Outputs a `Caw` message to the standard output.
+func printCaw(cawMessage *caw.Caw) {
+  parentId := cawMessage.GetParentId()
+  if parentId == nil {
+    parentId = []byte("nil")
+  }
+  s := cawMessage.GetTimestamp().GetSeconds()
+  t := time.Unix(s, 0)
+  fmt.Println("{")
+  fmt.Printf( "  username: %s,\n", cawMessage.GetUsername())
+  fmt.Printf( "  text: %s,\n", cawMessage.GetText())
+  fmt.Printf( "  id: %s,\n", cawMessage.GetId())
+  fmt.Printf( "  parent_id: %s,\n", parentId)
+  fmt.Printf( "  time: %s\n", t)
+  fmt.Println("}")
 }
 
 func main() {
@@ -51,14 +70,14 @@ func main() {
 
     // Handle flag -registeruser.
     if *registerUser != "" {
-        client.RegisterUser(*registerUser);
+        client.RegisterUser(*registerUser)
     }
     // Handle flag -follow.
     if *follow != "" {
         if *user == "" {
             fmt.Println("You need to login to follow a user.")
         } else {
-            client.Follow(*user, *follow);
+            client.Follow(*user, *follow)
         }
     }
     // Handle flag -profile.
@@ -66,9 +85,20 @@ func main() {
         if *user == "" {
             fmt.Println("You need to login to get the user's profile.")
         } else {
-            profileReply := client.Profile(*user);
+            profileReply := client.Profile(*user)
             if profileReply != nil {
                 printProfileReply(profileReply)
+            }
+        }
+    }
+    // Handle flag -caw.
+    if *text != "" {
+        if *user == "" {
+            fmt.Println("You need to login to post a caw.")
+        } else {
+            cawMessage := client.Caw(*user, *text, *reply)
+            if cawMessage != nil {
+                printCaw(cawMessage)
             }
         }
     }
@@ -76,6 +106,6 @@ func main() {
     // Handle flag -unhook_all.
     if *unhookAll {
         fmt.Println("Unhooking all Caw functions from the Faz layer...")
-        client.UnhookAll();
+        client.UnhookAll()
     }
 }
