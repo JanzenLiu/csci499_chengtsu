@@ -47,7 +47,7 @@ func NewCawClient(cc grpc.ClientConnInterface) *CawClient {
 
 // Hooks all Caw functions on Faz, and returns true on success.
 func (c *CawClient) HookAll() bool {
-    success := true;
+    success := true
     for eventType, funcName := range c.Funcs {
         // Make the request.
         request := faz.HookRequest{
@@ -65,12 +65,12 @@ func (c *CawClient) HookAll() bool {
             fmt.Printf("Successfully hooked the function %s.\n", funcName)
         }
     }
-    return success;
+    return success
 }
 
 // Unhooks all Caw functions from Faz, and returns true on success.
 func (c *CawClient) UnhookAll() bool {
-    success := true;
+    success := true
     for eventType, funcName := range c.Funcs {
         // Make the request.
         request := faz.UnhookRequest{
@@ -78,7 +78,7 @@ func (c *CawClient) UnhookAll() bool {
         }
         // Make RPC to the Faz service.
         ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-        _, err := c.stub.Unhook(ctx, &request);
+        _, err := c.stub.Unhook(ctx, &request)
         cancel()
         if err != nil {
             fmt.Printf("Failed to unhook the function %s. %v\n", funcName, err)
@@ -87,10 +87,10 @@ func (c *CawClient) UnhookAll() bool {
             fmt.Printf("Successfully unhooked the function %s.\n", funcName)
         }
     }
-    return success;
+    return success
 }
 
-// Sends an `RegisterUser` event to Faz and returns true on success.
+// Sends a `RegisterUser` event to Faz and returns true on success.
 func (c *CawClient) RegisterUser(username string) bool {
     // Make the inner request packed in the generic request payload.
     innerRequest := caw.RegisteruserRequest{
@@ -118,7 +118,7 @@ func (c *CawClient) RegisterUser(username string) bool {
     return true
 }
 
-// Sends an `Follow` event to Faz and returns true on success.
+// Sends a `Follow` event to Faz and returns true on success.
 func (c *CawClient) Follow(username, toFollow string) bool {
     // Make the inner request packed in the generic request payload.
     innerRequest := caw.FollowRequest{
@@ -147,7 +147,7 @@ func (c *CawClient) Follow(username, toFollow string) bool {
     return true
 }
 
-// Sends an `Profile` event to Faz and returns a `ProfileReply`
+// Sends a `Profile` event to Faz and returns a `ProfileReply`
 // message containing the desired information on success.
 func (c *CawClient) Profile(username string) *caw.ProfileReply {
     // Make the inner request packed in the generic request payload.
@@ -186,7 +186,7 @@ func (c *CawClient) Profile(username string) *caw.ProfileReply {
     return innerResponse
 }
 
-// Sends an `Caw` event to Faz and returns the Caw message posted on success.
+// Sends a `Caw` event to Faz and returns the Caw message posted on success.
 func (c *CawClient) Caw(username, text, parentId string) *caw.Caw {
     // Make the inner request packed in the generic request payload.
     innerRequest := caw.CawRequest{
@@ -226,6 +226,8 @@ func (c *CawClient) Caw(username, text, parentId string) *caw.Caw {
     return innerResponse.GetCaw()
 }
 
+// Sends a `Read` event to Faz, and returns Caw
+// messages of all threads read.
 func (c *CawClient) Read(cawId string) []*caw.Caw {
     // Make the inner request packed in the generic request payload.
     innerRequest := caw.ReadRequest{
