@@ -8,6 +8,7 @@ import (
     "google.golang.org/grpc"
 )
 
+// Define command-line flags.
 var (
 	fazAddr      = flag.String("faz_addr", "localhost:50000", "The server Faz address in the format of host:port")
 	registerUser = flag.String("registeruser", "", "Registers the given username")
@@ -28,7 +29,7 @@ func main() {
 	opts = append(opts, grpc.WithBlock())
 	conn, err := grpc.Dial(*fazAddr, opts...)
 	if err != nil {
-		fmt.Printf("fail to dial: %v", err)
+		fmt.Printf("Failed to dial. %v", err)
 	}
 	defer conn.Close()
 	client := NewCawClient(conn)
@@ -39,7 +40,7 @@ func main() {
         client.HookAll();
     }
 
-    // Handle flag --registeruser.
+    // Handle flag -registeruser.
     if *registerUser != "" {
         client.RegisterUser(*registerUser);
     }
