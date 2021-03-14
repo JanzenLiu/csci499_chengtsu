@@ -131,13 +131,13 @@ For Example:
 ./caw_cli --user Eren --caw "Sit down, Reiner"
 ./caw_cli --unhook_all
 # Go version
-./caw_cli -hook_all
-./caw_cli -registeruser Eren
-./caw_cli -registeruser Mikasa
-./caw_cli -user Mikasa -follow Eren
-./caw_cli -user Mikasa -profile
-./caw_cli -user Eren -caw "Sit down, Reiner"
-./caw_cli -unhook_all
+./caw_cli_go -hook_all
+./caw_cli_go -registeruser Eren
+./caw_cli_go -registeruser Mikasa
+./caw_cli_go -user Mikasa -follow Eren
+./caw_cli_go -user Mikasa -profile
+./caw_cli_go -user Eren -caw "Sit down, Reiner"
+./caw_cli_go -unhook_all
 ```
 
 > **Note!** The command-line tool also supports chaining flags to enable you 
