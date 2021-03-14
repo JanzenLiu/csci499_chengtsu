@@ -90,8 +90,7 @@ func (c *CawClient) UnhookAll() bool {
     return success;
 }
 
-// Sends an `RegisterUser` event to Faz,
-// and returns true on success.
+// Sends an `RegisterUser` event to Faz and returns true on success.
 func (c *CawClient) RegisterUser(username string) bool {
     // Make the inner request packed in the generic request payload.
     innerRequest := caw.RegisteruserRequest{
@@ -117,4 +116,71 @@ func (c *CawClient) RegisterUser(username string) bool {
     }
     fmt.Println("Successfully registered the user.")
     return true
+}
+
+// Sends an `Follow` event to Faz and returns true on success.
+func (c *CawClient) Follow(username, toFollow string) bool {
+    // Make the inner request packed in the generic request payload.
+    innerRequest := caw.FollowRequest{
+        Username: username,
+        ToFollow: toFollow,
+    }
+    // Make the generic request.
+    payload, err := ptypes.MarshalAny(&innerRequest)
+    if err != nil {
+        fmt.Println(err)
+        return false
+    }
+    request := faz.EventRequest{
+        EventType: Follow,
+        Payload: payload,
+    }
+    // Make RPC to the Faz service.
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    _, err = c.stub.Event(ctx, &request)
+    if err != nil {
+        fmt.Println(err)
+        return false
+    }
+    fmt.Println("Successfully followed the user.")
+    return true
+}
+
+// Sends an `Follow` event to Faz and returns true on success.
+func (c *CawClient) Profile(username string) *caw.ProfileReply {
+    // Make the inner request packed in the generic request payload.
+    innerRequest := caw.ProfileRequest{
+        Username: username,
+    }
+    // Make the generic request.
+    payload, err := ptypes.MarshalAny(&innerRequest)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    request := faz.EventRequest{
+        EventType: Profile,
+        Payload: payload,
+    }
+    // Make RPC to the Faz service.
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    response, err := c.stub.Event(ctx, &request)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    // Get the ProfileReply message.
+    payload = response.GetPayload()
+    if payload == nil {
+        return nil
+    }
+    innerResponse := new(caw.ProfileReply)
+    err = ptypes.UnmarshalAny(payload, innerResponse)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    return innerResponse
 }

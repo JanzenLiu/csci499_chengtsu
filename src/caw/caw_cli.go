@@ -4,7 +4,7 @@ import (
     "flag"
     "fmt"
 
-    _ "github.com/JanzenLiu/csci499_chengtsu/protos/caw"
+    "github.com/JanzenLiu/csci499_chengtsu/protos/caw"
     "google.golang.org/grpc"
 )
 
@@ -21,6 +21,15 @@ var (
     hookAll      = flag.Bool("hook_all", false, "Hooks all Caw functions to the Faz layer.")
     unhookAll    = flag.Bool("unhook_all", false, "Unhooks all Caw functions from the Faz layer.")
 )
+
+func printProfileReply(profileReply *caw.ProfileReply) {
+    following := profileReply.GetFollowing()
+    followers := profileReply.GetFollowers()
+    fmt.Println("{");
+    fmt.Printf( "  following (size=%d): %v\n", len(following), following)
+    fmt.Printf( "  followers (size=%d): %v\n", len(followers), followers)
+    fmt.Println("}");
+}
 
 func main() {
     flag.Parse()
@@ -43,6 +52,25 @@ func main() {
     // Handle flag -registeruser.
     if *registerUser != "" {
         client.RegisterUser(*registerUser);
+    }
+    // Handle flag -follow.
+    if *follow != "" {
+        if *user == "" {
+            fmt.Println("You need to login to follow a user.")
+        } else {
+            client.Follow(*user, *follow);
+        }
+    }
+    // Handle flag -profile.
+    if *profile {
+        if *user == "" {
+            fmt.Println("You need to login to get the user's profile.")
+        } else {
+            profileReply := client.Profile(*user);
+            if profileReply != nil {
+                printProfileReply(profileReply)
+            }
+        }
     }
 
     // Handle flag -unhook_all.
