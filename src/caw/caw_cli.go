@@ -102,6 +102,17 @@ func main() {
             }
         }
     }
+    // Handle flag -reply.
+    if *reply != "" && *text == "" {
+        fmt.Println("You need to give the content with -caw to post a reply.")
+    }
+    // Handle flag -read
+    if *read != "" {
+        caws := client.Read(*read)
+        for _, cawMessage := range caws {
+            printCaw(cawMessage)
+        }
+    }
 
     // Handle flag -unhook_all.
     if *unhookAll {

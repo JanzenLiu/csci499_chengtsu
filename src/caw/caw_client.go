@@ -225,3 +225,40 @@ func (c *CawClient) Caw(username, text, parentId string) *caw.Caw {
     }
     return innerResponse.GetCaw()
 }
+
+func (c *CawClient) Read(cawId string) []*caw.Caw {
+    // Make the inner request packed in the generic request payload.
+    innerRequest := caw.ReadRequest{
+        CawId: []byte(cawId),
+    }
+    // Make the generic request.
+    payload, err := ptypes.MarshalAny(&innerRequest)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    request := faz.EventRequest{
+        EventType: Read,
+        Payload: payload,
+    }
+    // Make RPC to the Faz service.
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    response, err := c.stub.Event(ctx, &request)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    // Get the Caw message.
+    payload = response.GetPayload()
+    if payload == nil {
+        return nil
+    }
+    innerResponse := new(caw.ReadReply)
+    err = ptypes.UnmarshalAny(payload, innerResponse)
+    if err != nil {
+        fmt.Println(err)
+        return nil
+    }
+    return innerResponse.GetCaws()
+}
