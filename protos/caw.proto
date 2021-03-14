@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+option go_package = "github.com/JanzenLiu/csci499_chengtsu/protos/caw";
+
 package caw;
 
 // Time as given by Linux gettimeofday().
