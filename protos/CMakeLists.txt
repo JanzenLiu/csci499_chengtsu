@@ -49,4 +49,22 @@ foreach(proto ${PROTO_FILES})
     set(_target ${proto_name_we}_grpc)
     add_library(${_target} STATIC ${proto_srcs} ${proto_hdrs} ${grpc_srcs} ${grpc_hdrs})
     target_include_directories(${_target} PUBLIC ${Protobuf_INCLUDE_DIRS})
+
+    # Generate go files.
+    set(go_output_dir "${CMAKE_CURRENT_BINARY_DIR}/${proto_name_we}")
+    set(proto_gos "${go_output_dir}/${proto_name_we}.pb.go")
+    set(grpc_gos "${go_output_dir}/${proto_name_we}_grpc.pb.go")
+    add_custom_command(
+            OUTPUT "${proto_gos}" "${grpc_gos}"
+            COMMAND mkdir -p "${go_output_dir}"
+            COMMAND ${_PROTOBUF_PROTOC}
+            ARGS --go_out="${go_output_dir}"
+            --go_opt=paths=source_relative
+            --go-grpc_out="${go_output_dir}"
+            --go-grpc_opt=paths=source_relative
+            -I "${proto_dir}"
+            "${proto}"
+            DEPENDS "${proto}")
+    add_custom_target(${proto_name_we}_grpc_go
+            DEPENDS "${proto_gos}" "${grpc_gos}")
 endforeach()

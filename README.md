@@ -22,11 +22,14 @@ An FaaS platform and a social network system on top of it. For USC CSCI499 - Rob
 ## Architecture <a name = "arch"></a>
 ![Architecture and Workflow](./images/arch_and_workflow.svg)
 
-As shown in the diagram, there will be three executables built in this project (except tests), they are:
+As shown in the diagram, there will be four executables built in this project (except tests), they are:
 
 - **caw_cli**: The Caw command-line tool who accepts the user's input, sends requests to 
 the Faz Server through the `CawClient` accordingly, and displays response messages to the 
 user based on the return from the Faz Server.
+
+- **caw_cli_go**: Same as `caw_cli` except `caw_cli` is built from C++ sources and `caw_cli_go`
+is built from Go sources.
 
 - **faz_server**: The Faz Server who hosts a `FazService`, which executes the corresponding
 Caw handler functions based on the incoming event types, and sends back response messages. 
@@ -53,6 +56,8 @@ If not using vagrant, to build and run this project locally you will need a few 
 - Install **gflags**
 - Install **glog**
 - Install **gRPC** and **Protobuf**
+- Install **Go**
+- Install **Go plugins** for the protocol compiler
 
 ## Build <a name = "build"></a>
 Assume you are already in the project root directory (on your vagrant guest, or on your
@@ -86,27 +91,38 @@ To run the FaaS server
 ./faz_server
 ```
 
-To use the Caw command-line tool for different purposes
+To use the Caw command-line tool for different purposes.
+Note the tiny difference between the flag usage of the C++ and Go version
+command-line tools: C++ accepts double-dash flags while accepts single-dash ones.
 
 - To hook all Caw functions: 
-`./caw_cli --hook_all`
+    - `./caw_cli --hook_all`
+    - `./caw_cli_go -hook_all`
 - To register a user: 
-`./caw_cli --registeruser <username>`
+    - `./caw_cli --registeruser <username>`
+    - `./caw_cli_go -registeruser <username>`
 - To follow another user on behalf of a user: 
-`./caw_cli --user <username> --follow <to_follow>`
+    - `./caw_cli --user <username> --follow <to_follow>`
+    - `./caw_cli_go -user <username> -follow <to_follow>`
 - To get a user's profile: 
-`./caw_cli --user <username> --profile`
+    - `./caw_cli --user <username> --profile`
+    - `./caw_cli_go -user <username> -profile`
 - To post a caw on behalf of a user: 
-`./caw_cli --user <username> --caw <text>`
+    - `./caw_cli --user <username> --caw <text>`
+    - `./caw_cli_go -user <username> -caw <text>`
 - To post a caw replying an existing caw on behalf of a user: 
-`./caw_cli --user <username> --caw <text> --reply <parent_caw_id>`
+    - `./caw_cli --user <username> --caw <text> --reply <parent_caw_id>`
+    - `./caw_cli_go -user <username> -caw <text> -reply <parent_caw_id>`
 - To read a caw thread starting from a caw: 
-`./caw_cli --read <caw_id>`
+    - `./caw_cli --read <caw_id>`
+    - `./caw_cli_go -read <caw_id>`
 - To unhook all Caw functions: 
-`./caw_cli --unhook_all`
+    - `./caw_cli --unhook_all`
+    - `./caw_cli_go -unhook_all`
 
 For Example:
 ```
+# C++ version
 ./caw_cli --hook_all
 ./caw_cli --registeruser Eren
 ./caw_cli --registeruser Mikasa
@@ -114,6 +130,14 @@ For Example:
 ./caw_cli --user Mikasa --profile
 ./caw_cli --user Eren --caw "Sit down, Reiner"
 ./caw_cli --unhook_all
+# Go version
+./caw_cli_go -hook_all
+./caw_cli_go -registeruser Eren
+./caw_cli_go -registeruser Mikasa
+./caw_cli_go -user Mikasa -follow Eren
+./caw_cli_go -user Mikasa -profile
+./caw_cli_go -user Eren -caw "Sit down, Reiner"
+./caw_cli_go -unhook_all
 ```
 
 > **Note!** The command-line tool also supports chaining flags to enable you 
@@ -124,6 +148,9 @@ For Example:
 >   --caw "I am the Armored Titan, he is the Colossal Titan" \
 >   --profile --unhook_all
 >```
+> When flags for multiple functions are specified, the requested functions will
+> always be executed in the order of:
+> HookAll (first), RegisterUser, Follow, Profile, Caw, Read, UnhookAll (last) 
 
 ## Test <a name = "test"></a>
 Assume you are already in a directory containing the built executables.
@@ -152,5 +179,7 @@ some extreme cases (for example, a posted caw accidentally lost in the database)
 - [Cheng-Tsung Liu](https://github.com/JanzenLiu)
 
 ## Acknowledgements <a name = "acks"></a>
+(In alphabetical order of first name)
 - [Adam Egyed](https://github.com/adamegyed)
 - [Barath Raghavan](https://raghavan.usc.edu/)
+- [Grace Susanto](https://github.com/gsusanto)
