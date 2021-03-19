@@ -1,5 +1,6 @@
 #include "kvstore/kvstore.h"
 
+#include <cstdio>
 #include <iostream>
 #include <mutex>
 #include <shared_mutex>
@@ -15,7 +16,7 @@ KVStore::KVStore() : map_(), mutex_() {}
 
 KVStore::KVStore(initializer_list<pair<string, vector<string>>> args)
     : map_(), mutex_() {
-  for (auto& p : args) {
+  for (const auto& p : args) {
     map_[p.first] = p.second;
   }
 }
