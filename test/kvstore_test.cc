@@ -1,11 +1,18 @@
 #include "kvstore/kvstore.h"
 
+#include <unistd.h>
+
+#include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include <glog/logging.h>
 #include <gtest/gtest.h>
+
+namespace fs = std::filesystem;
 
 using std::string;
 using std::thread;
@@ -29,6 +36,24 @@ VectorEq(vector<T>&& expected, vector<T>&& actual){
   }
   return ::testing::AssertionSuccess();
 }
+
+class PersistenceTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    filename_ = fs::temp_directory_path() / "kvstore_test.data";
+    remove(filename_.c_str());
+  }
+
+  void TearDown() override {
+    remove(filename_.c_str());
+  }
+
+  int GetFileSize() {
+    return fs::file_size(fs::path{filename_});
+  }
+
+  string filename_;
+};
 
 // Tests the basic functionality of each interface.
 TEST(MapTest, MapTest) {
@@ -156,4 +181,116 @@ TEST(ConcurrencyTest, ConcurrentReadWriteTest) {
   }
   put_thread.join();
   clear_thread.join();
+}
+
+// comment
+TEST_F(PersistenceTest, IntactFileTest) {
+  {
+    KVStore store(filename_);
+    ASSERT_TRUE(store.Empty());
+    store.Put("k1", "v1");
+    store.Put("k1", "v2");
+    store.Put("k2", "v3");
+    store.Clear();
+    store.Put("k3", "v4");
+    store.Put("k3", "v5");
+    store.Put("k4", "v6");
+    store.Put("k5", "v7");
+    store.Remove("k4");
+  }
+  {
+    KVStore store(filename_);
+    ASSERT_EQ(2, store.Size());
+    EXPECT_TRUE(VectorEq({"v4", "v5"}, store.Get("k3")));
+    EXPECT_TRUE(VectorEq({"v7"}, store.Get("k5")));
+
+    store.Put("k5", "v8");
+    store.Put("k6", "v9");
+    store.Remove("k3");
+  }
+  {
+    KVStore store(filename_);
+    ASSERT_EQ(2, store.Size());
+    EXPECT_TRUE(VectorEq({"v7", "v8"}, store.Get("k5")));
+    EXPECT_TRUE(VectorEq({"v9"}, store.Get("k6")));
+  }
+}
+
+// comment
+TEST_F(PersistenceTest, CorruptFileTest) {
+  {
+    KVStore store(filename_);
+    store.Put("k1", "v1");
+    store.Put("k2", "v2");
+  }
+  int old_size = GetFileSize();
+  {
+    KVStore store(filename_);
+    store.Put("k1", "v3");
+  }
+  {
+    int new_size = GetFileSize();
+    int corrupt_size = (old_size + new_size) / 2;
+    truncate(filename_.c_str(), corrupt_size);
+    KVStore store(filename_);
+    ASSERT_EQ(2, store.Size());
+    EXPECT_TRUE(VectorEq({"v1"}, store.Get("k1")));
+    EXPECT_TRUE(VectorEq({"v2"}, store.Get("k2")));
+  }
+  ASSERT_EQ(old_size, GetFileSize());
+}
+
+// comment
+TEST_F(PersistenceTest, LongStringTest) {
+  vector<int> lens = {100, 1000, 10000, 100000};
+  {
+    KVStore store(filename_);
+    for (int len : lens) {
+      string key = string(len, 'k');
+      string value = string(len, 'v');
+      store.Put(key, value);
+      store.Put(key, value);
+      store.Put(key, value);
+    }
+  }
+  {
+    KVStore store(filename_);
+    ASSERT_EQ(4, store.Size());
+    for (int len : lens) {
+      string key = string(len, 'k');
+      string value = string(len, 'v');
+      EXPECT_TRUE(VectorEq({value, value, value}, store.Get(key)));
+    }
+  }
+}
+
+// comment
+TEST_F(PersistenceTest, NonAlphanumCharTest) {
+  string str1 = "!@#$%";
+  string str2 = "^&*()";
+  string str3 = "-=_+~";
+  string str4 = "`{[]}";
+  string str5 = "\\|:;'";
+  string str6 = "\"<>,.";
+  string str7 = "?/ \t\n";
+  {
+    KVStore store(filename_);
+    store.Put(str1, str2);
+    store.Put(str1, str3);
+    store.Put(str1, str4);
+    store.Put(str5, str6);
+    store.Put(str5, str7);
+  }
+  {
+    KVStore store(filename_);
+    ASSERT_EQ(2, store.Size());
+    EXPECT_TRUE(VectorEq({str2, str3, str4}, store.Get(str1)));
+    EXPECT_TRUE(VectorEq({str6, str7}, store.Get(str5)));
+  }
+}
+
+int main(int argc, char **argv) {
+  testing::InitGoogleTest(&argc, argv);
+  google::InitGoogleLogging(argv[0]);
+  return RUN_ALL_TESTS();
 }

@@ -3,7 +3,9 @@
 
 #include "kvstore/kvstore_interface.h"
 
+#include <fstream>
 #include <initializer_list>
+#include <optional>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
@@ -21,6 +23,8 @@ class KVStore : public KVStoreInterface {
   // the last occurrence counts.
   KVStore(std::initializer_list<
       std::pair<std::string, std::vector<std::string>>> args);
+
+  KVStore(const std::string& filename);
 
   // Returns all previously stored values under the key.
   // A copy instead of a reference is returned here (unlike
@@ -50,8 +54,16 @@ class KVStore : public KVStoreInterface {
   void Print()  const;
 
  private:
+  bool LoadChange(std::ifstream& infile);
+
+  bool LoadString(std::ifstream& infile, std::string& str);
+
+  bool DumpString(const std::string& str);
+
   // Hash map that stores the actual data.
   std::unordered_map<std::string, std::vector<std::string>> map_;
+
+  std::optional<std::ofstream> log_;
   // Read-write lock to enforce thread-safety.
   mutable std::shared_mutex mutex_;
 };
