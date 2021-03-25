@@ -87,10 +87,14 @@ bool KVStore::Put(const string& key, const string& value) {
   // Persist the put operation to the associated file if applicable.
   if (log_.has_value()) {
     char c = ChangeType::kPut;
-    if (!log_->write(&c, sizeof c) || !DumpString(key) || !DumpString(value)) {
+    if (!log_->write(&c, sizeof c) ||
+        !DumpString(key) || !DumpString(value) || !log_->flush()) {
       // TODO(JanzenLiu): Replace with ERROR level and add some
       //                  more sophisticated error handling.
       LOG(FATAL) << "Failed to persist operation Put("
+        << key << ", " << value << ") to file.";
+    } else {
+      LOG(INFO) << "Successfully persisted operation Put("
         << key << ", " << value << ") to file.";
     }
   }
@@ -103,11 +107,14 @@ bool KVStore::Remove(const string& key) {
   // Persist the remove operation to the associated file if applicable.
   if (log_.has_value()) {
     char c = ChangeType::kRemove;
-    if (!log_->write(&c, sizeof c) || !DumpString(key)) {
+    if (!log_->write(&c, sizeof c) || !DumpString(key) || !log_->flush()) {
       // TODO(JanzenLiu): Replace with ERROR level and add some
       //                  more sophisticated error handling.
       LOG(FATAL) << "Failed to persist operation Remove("
         << key << ") to file.";
+    } else {
+      LOG(INFO) << "Successfully persisted operation Remove("
+                << key << ") to file.";
     }
   }
   return ret;
@@ -119,10 +126,12 @@ void KVStore::Clear() {
   // Persist the clear operation to the associated file if applicable.
   if (log_.has_value()) {
     char c = ChangeType::kClear;
-    if (!log_->write(&c, sizeof c)) {
+    if (!log_->write(&c, sizeof c) || !log_->flush()) {
       // TODO(JanzenLiu): Replace with ERROR level and add some
       //                  more sophisticated error handling.
       LOG(FATAL) << "Failed to persist operation Clear() to file.";
+    } else {
+      LOG(INFO) << "Successfully persisted operation Clear() to file.";
     }
   }
 }
@@ -205,9 +214,11 @@ bool KVStore::LoadString(ifstream& infile, string& str) {
   }
   // Load the characters of the string.
   str.resize(len);
-  infile.read(&str[0], len);
-  if (!infile.good()) {
-    return false;
+  if (len > 0) {
+    infile.read(&str[0], len);
+    if (!infile.good()) {
+      return false;
+    }
   }
   return true;
 }
@@ -235,7 +246,7 @@ bool KVStore::DumpString(const string& str) {
   // Reference:
   // https://developers.google.com/protocol-buffers/docs/encoding#varints
   size_t x = str.length();
-  while (x > 0) {
+  do {
     // Get the next 7 bits.
     char b = x & 0x7F;
     x >>= 7;
@@ -248,8 +259,12 @@ bool KVStore::DumpString(const string& str) {
     if (!log_->write(&b, sizeof b)) {
       return false;
     }
-  }
+  } while (x > 0);
   // Dump all characters of the string.
-  if(!log_->write(str.data(), str.length())) { return false; }
+  if (!str.empty()) {
+    if (!log_->write(str.data(), str.length())) {
+      return false;
+    }
+  }
   return true;
 }
