@@ -54,7 +54,7 @@ add_library(${_caw_client} STATIC
 target_link_libraries(${_caw_client} PUBLIC
         caw_grpc faz_grpc ${GRPC_LIBS})
 
-# Target: Caw CLI
+# Target: Caw CLI (built from C++ sources)
 set(_caw_cli caw_cli)
 add_executable(${_caw_cli}
         src/caw/caw_cli.cc)
@@ -84,3 +84,21 @@ add_executable(${_caw_handler_test}
         src/kvstore/kvstore.cc)
 target_link_libraries(${_caw_handler_test}
         gtest gtest_main caw_grpc ${GRPC_LIBS} glog)
+
+# Target: Caw CLI (built from Go sources)
+set(_caw_cli_go caw_cli_go)
+add_custom_target(${_caw_cli_go} ALL
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/go.mod
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/caw/caw_cli.go
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/caw/caw_client.go
+            ${CMAKE_BINARY_DIR}
+        COMMAND go mod tidy
+        COMMAND go build -o ${_caw_cli_go}
+        COMMAND ${CMAKE_COMMAND} -E remove
+            ${CMAKE_BINARY_DIR}/go.mod
+            ${CMAKE_BINARY_DIR}/go.sum
+            ${CMAKE_BINARY_DIR}/caw_cli.go
+            ${CMAKE_BINARY_DIR}/caw_client.go
+        )
+add_dependencies(${_caw_cli_go} caw_grpc_go faz_grpc_go)
