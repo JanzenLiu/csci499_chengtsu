@@ -81,9 +81,13 @@ to use the Caw functionalities.
 Assume you are already in a directory containing the built executables.
 Below are instructions to get the system work.
 
-To run the KVStore server
+To run the KVStore server.
+When given the `--store <file>` flag, the key-value store server will store all 
+operations to the given file; if the file already exists when it starts, it will 
+first load entries from the specified previously-stored file and then store any 
+new operations to that same file. If no flag is given, it will not store data to any file. 
 ```
-./kvstore_server
+./kvstore_server [--store <file>]
 ```
 
 To run the FaaS server
