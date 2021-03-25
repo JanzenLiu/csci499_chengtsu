@@ -183,11 +183,13 @@ TEST(ConcurrencyTest, ConcurrentReadWriteTest) {
   clear_thread.join();
 }
 
-// comment
-TEST_F(PersistenceTest, IntactFileTest) {
+// Tests the basic functionality to load from and save to file.
+TEST_F(PersistenceTest, PersistenceTest) {
   {
+    // Load from a non-existent file.
     KVStore store(filename_);
     ASSERT_TRUE(store.Empty());
+    // Store all kinds of operations to the file.
     store.Put("k1", "v1");
     store.Put("k1", "v2");
     store.Put("k2", "v3");
@@ -199,16 +201,18 @@ TEST_F(PersistenceTest, IntactFileTest) {
     store.Remove("k4");
   }
   {
+    // Load from an existing file who has experienced one run.
     KVStore store(filename_);
     ASSERT_EQ(2, store.Size());
     EXPECT_TRUE(VectorEq({"v4", "v5"}, store.Get("k3")));
     EXPECT_TRUE(VectorEq({"v7"}, store.Get("k5")));
-
+    // Store some operations to the file.
     store.Put("k5", "v8");
     store.Put("k6", "v9");
     store.Remove("k3");
   }
   {
+    // Load from a file who has experienced more than one run.
     KVStore store(filename_);
     ASSERT_EQ(2, store.Size());
     EXPECT_TRUE(VectorEq({"v7", "v8"}, store.Get("k5")));
@@ -216,8 +220,8 @@ TEST_F(PersistenceTest, IntactFileTest) {
   }
 }
 
-// comment
-TEST_F(PersistenceTest, CorruptFileTest) {
+// Tests the functionality to deal with corrupted file.
+TEST_F(PersistenceTest, CorruptedFileTest) {
   {
     KVStore store(filename_);
     store.Put("k1", "v1");
@@ -229,21 +233,25 @@ TEST_F(PersistenceTest, CorruptFileTest) {
     store.Put("k1", "v3");
   }
   {
+    // Simulate a corruption by deleting the last byte from the file.
     int new_size = GetFileSize();
-    int corrupt_size = (old_size + new_size) / 2;
-    truncate(filename_.c_str(), corrupt_size);
+    truncate(filename_.c_str(), new_size-1);
+    // Check that the last operation, which is corrupted,
+    // is not loaded into the KVStore.
     KVStore store(filename_);
     ASSERT_EQ(2, store.Size());
     EXPECT_TRUE(VectorEq({"v1"}, store.Get("k1")));
     EXPECT_TRUE(VectorEq({"v2"}, store.Get("k2")));
   }
+  // Check that the last operation is removed from the file.
   ASSERT_EQ(old_size, GetFileSize());
 }
 
-// comment
+// Tests whether the persistence works well with long keys and values.
 TEST_F(PersistenceTest, LongStringTest) {
   vector<int> lens = {100, 1000, 10000, 100000};
   {
+    // Store some operations to the file.
     KVStore store(filename_);
     for (int len : lens) {
       string key = string(len, 'k');
@@ -264,7 +272,8 @@ TEST_F(PersistenceTest, LongStringTest) {
   }
 }
 
-// comment
+// Tests whether the persistence works well with keys and values
+// containing non-alphanumeric characters.
 TEST_F(PersistenceTest, NonAlphanumCharTest) {
   string str1 = "!@#$%";
   string str2 = "^&*()";
@@ -274,6 +283,7 @@ TEST_F(PersistenceTest, NonAlphanumCharTest) {
   string str6 = "\"<>,.";
   string str7 = "?/ \t\n";
   {
+    // Stores some operations to the file.
     KVStore store(filename_);
     store.Put(str1, str2);
     store.Put(str1, str3);
@@ -290,6 +300,9 @@ TEST_F(PersistenceTest, NonAlphanumCharTest) {
 }
 
 int main(int argc, char **argv) {
+  // Use a self-defined main function here to call InitGoogleLogging(),
+  // otherwise, all glog messages (including INFO) will be directed to
+  // STDERR and hence displayed to the terminal.
   testing::InitGoogleTest(&argc, argv);
   google::InitGoogleLogging(argv[0]);
   return RUN_ALL_TESTS();
