@@ -92,10 +92,10 @@ bool KVStore::Put(const string& key, const string& value) {
       // TODO(JanzenLiu): Replace with ERROR level and add some
       //                  more sophisticated error handling.
       LOG(FATAL) << "Failed to persist operation Put("
-        << key << ", " << value << ") to file.";
+                 << key << ", " << value << ") to file.";
     } else {
       LOG(INFO) << "Successfully persisted operation Put("
-        << key << ", " << value << ") to file.";
+                << key << ", " << value << ") to file.";
     }
   }
   return true;
@@ -111,7 +111,7 @@ bool KVStore::Remove(const string& key) {
       // TODO(JanzenLiu): Replace with ERROR level and add some
       //                  more sophisticated error handling.
       LOG(FATAL) << "Failed to persist operation Remove("
-        << key << ") to file.";
+                 << key << ") to file.";
     } else {
       LOG(INFO) << "Successfully persisted operation Remove("
                 << key << ") to file.";

@@ -105,7 +105,7 @@ Status caw::handler::Follow(const Any* in, Any* out,
   if (!kvstore->Put(key, to_follow)) {
     LOG(ERROR) << "Added the following pair but failed to update the "
                << "following list. username=" << username << ", "
-               << "to_follow=" << to_follow << endl;
+               << "to_follow=" << to_follow;
     return Status(StatusCode::UNAVAILABLE,
                   "Failed to add following to the kvstore.");
   }
@@ -114,7 +114,7 @@ Status caw::handler::Follow(const Any* in, Any* out,
     LOG(ERROR) << "Added the following pair and updated the following"
                << "list, but failed to update the follower list. "
                << "username=" << username << ", "
-               << "to_follow=" << to_follow << endl;
+               << "to_follow=" << to_follow;
     return Status(StatusCode::UNAVAILABLE,
                   "Failed to add following to the kvstore.");
   }
@@ -231,11 +231,11 @@ Status caw::handler::Read(const Any *in, Any *out,
         q.insert(q.end(), reply_caw_ids.begin(), reply_caw_ids.end());
         current_caw_success = true;
       } else {
-        LOG(ERROR) << "Error decoding caw " << current_caw_id << "." << endl;
+        LOG(ERROR) << "Error decoding caw " << current_caw_id;
       }
     } else {
       LOG(ERROR) << "Error finding caw " << current_caw_id << ": "
-        << values.size() << " records found, expected 1." << endl;
+                 << values.size() << " records found, expected 1.";
     }
     // Notify failure.
     if (!current_caw_success) {

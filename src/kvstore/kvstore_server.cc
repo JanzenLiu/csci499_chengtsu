@@ -12,7 +12,7 @@ DEFINE_int32(port, 50001, "Port number for the kvstore GRPC interface to use.");
 DEFINE_string(file, "", "File for the kvstore service to use for persistence.");
 
 // Runs the key-value store gRPC service at a given port.
-void RunServer(int port, const std::string filename = "") {
+void RunServer(int port, const std::string& filename = "") {
   std::string server_address("0.0.0.0:" + std::to_string(port));
   KVStoreService service = filename.empty()?
       KVStoreService():KVStoreService(filename);
