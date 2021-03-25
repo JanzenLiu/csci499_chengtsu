@@ -81,6 +81,7 @@ to use the Caw functionalities.
 Assume you are already in a directory containing the built executables.
 Below are instructions to get the system work.
 
+### KVStore Server
 To run the KVStore server.
 When given the `--store <file>` flag, the key-value store server will store all 
 operations to the given file; if the file already exists when it starts, it will 
@@ -90,11 +91,13 @@ new operations to that same file. If no flag is given, it will not store data to
 ./kvstore_server [--store <file>]
 ```
 
+### FaaS Server
 To run the FaaS server
 ```
 ./faz_server
 ```
 
+### Caw Command-line Tool
 To use the Caw command-line tool for different purposes.
 Note the tiny difference between the flag usage of the C++ and Go version
 command-line tools: C++ accepts double-dash flags while accepts single-dash ones.
