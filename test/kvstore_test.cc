@@ -272,6 +272,23 @@ TEST_F(PersistenceTest, LongStringTest) {
   }
 }
 
+// Tests whether the persistence works well with empty keys and values.
+TEST_F(PersistenceTest, EmptyStringTest) {
+  {
+    // Stores some operations to the file.
+    KVStore store(filename_);
+    store.Put("k1", "");
+    store.Put("", "v1");
+    store.Put("", "");
+  }
+  {
+    KVStore store(filename_);
+    ASSERT_EQ(2, store.Size());
+    EXPECT_TRUE(VectorEq({""}, store.Get("k1")));
+    EXPECT_TRUE(VectorEq({"v1", ""}, store.Get("")));
+  }
+}
+
 // Tests whether the persistence works well with keys and values
 // containing non-alphanumeric characters.
 TEST_F(PersistenceTest, NonAlphanumCharTest) {
