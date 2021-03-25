@@ -37,17 +37,23 @@ VectorEq(vector<T>&& expected, vector<T>&& actual){
   return ::testing::AssertionSuccess();
 }
 
+// A test fixture for testing of the KVStore persistence feature.
+// It handles something related to the temporary file to use.
 class PersistenceTest : public ::testing::Test {
  protected:
   void SetUp() override {
+    // Prepare a temporary filename to use.
     filename_ = fs::temp_directory_path() / "kvstore_test.data";
+    // Delete the file in the case it already exists.
     remove(filename_.c_str());
   }
 
   void TearDown() override {
+    // Delete the temporary file.
     remove(filename_.c_str());
   }
 
+  // Returns the current size of the temporary file.
   int GetFileSize() {
     return fs::file_size(fs::path{filename_});
   }
