@@ -9,11 +9,13 @@
 #include "kvstore/kvstore_service.h"
 
 DEFINE_int32(port, 50001, "Port number for the kvstore GRPC interface to use.");
+DEFINE_string(store, "", "File for the kvstore service to use for persistence.");
 
 // Runs the key-value store gRPC service at a given port.
-void RunServer(int port) {
+void RunServer(int port, const std::string& filename = "") {
   std::string server_address("0.0.0.0:" + std::to_string(port));
-  KVStoreService service;
+  KVStoreService service = filename.empty()?
+      KVStoreService():KVStoreService(filename);
 
   grpc::ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.
@@ -37,6 +39,6 @@ int main(int argc, char** argv) {
   if (FLAGS_port < 0 or FLAGS_port > 65535) {
     LOG(FATAL) << "Invalid port number: " << FLAGS_port << "." << std::endl;
   }
-  RunServer(FLAGS_port);
+  RunServer(FLAGS_port, FLAGS_store);
   return 0;
 }

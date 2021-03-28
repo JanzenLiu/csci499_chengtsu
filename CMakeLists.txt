@@ -67,7 +67,7 @@ add_executable(${_kvstore_test}
         test/kvstore_test.cc
         src/kvstore/kvstore.cc)
 target_link_libraries(${_kvstore_test} PUBLIC
-        gtest gtest_main pthread)
+        gtest glog pthread)
 
 # Target: KVStore Shell (for testing use)
 set(_kvstore_shell_test kvstore_shell_test)

@@ -1,6 +1,8 @@
 #ifndef CSCI499_CHENGTSU_KVSTORE_SERVICE_H
 #define CSCI499_CHENGTSU_KVSTORE_SERVICE_H
 
+#include <string>
+
 #include <grpcpp/grpcpp.h>
 
 #include "kvstore.grpc.pb.h"
@@ -11,6 +13,8 @@
 class KeyValueStoreServiceImpl final : public kvstore::KeyValueStore::Service {
  public:
   KeyValueStoreServiceImpl(): store_() {}
+
+  KeyValueStoreServiceImpl(const std::string& filename) : store_(filename) {}
 
   // gRPC interface to add a value under a key.
   grpc::Status put(grpc::ServerContext* context,

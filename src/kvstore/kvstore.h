@@ -3,7 +3,9 @@
 
 #include "kvstore/kvstore_interface.h"
 
+#include <fstream>
 #include <initializer_list>
+#include <optional>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
@@ -21,6 +23,18 @@ class KVStore : public KVStoreInterface {
   // the last occurrence counts.
   KVStore(std::initializer_list<
       std::pair<std::string, std::vector<std::string>>> args);
+
+  // Constructs a KVStore with a given file.
+  // If the file already exists, the KVStore will load
+  // changes from the file upon construction; if the file
+  // is corrupted (for example, due to interruption from
+  // last run), the KVStore will automatically detect where
+  // the corrupted content starts and automatically remove
+  // all content from that point from the file.
+  // The KVStore will be associated with the file, so that
+  // every change (Put/Remove/Clear) made to the KVStore
+  // will be immediately appended to the file.
+  KVStore(const std::string& filename);
 
   // Returns all previously stored values under the key.
   // A copy instead of a reference is returned here (unlike
@@ -50,8 +64,26 @@ class KVStore : public KVStoreInterface {
   void Print()  const;
 
  private:
+  // Loads the next change from the given file stream and
+  // returns true on success.
+  // Assuming the caller will always make sure EOF has not
+  // been reached before calling this function, we consider
+  // all failures are caused by corrupted data and will
+  // truncate all trailing content from that point afterwards.
+  bool LoadChange(std::ifstream& infile);
+
+  // Loads a string from the given file stream into `str`,
+  // and returns true on success.
+  bool LoadString(std::ifstream& infile, std::string& str);
+
+  // Dumps the given string to the associated file stream
+  // `log_`, and returns true on success.
+  bool DumpString(const std::string& str);
+
   // Hash map that stores the actual data.
   std::unordered_map<std::string, std::vector<std::string>> map_;
+  // Associated file stream to dump all changes into.
+  std::optional<std::ofstream> log_;
   // Read-write lock to enforce thread-safety.
   mutable std::shared_mutex mutex_;
 };
