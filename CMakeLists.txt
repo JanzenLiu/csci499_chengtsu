@@ -95,7 +95,7 @@ add_custom_target(${_caw_cli_go} ALL
             ${CMAKE_CURRENT_SOURCE_DIR}/go/caw_client.go
             ${CMAKE_BINARY_DIR}
         COMMAND go mod tidy
-        COMMAND go build -o ${_caw_cli_go}
+        COMMAND GO111MODULE=on go build -o ${_caw_cli_go}
         COMMAND ${CMAKE_COMMAND} -E remove
             ${CMAKE_BINARY_DIR}/go.mod
             ${CMAKE_BINARY_DIR}/go.sum
