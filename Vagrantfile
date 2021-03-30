@@ -74,38 +74,38 @@ Vagrant.configure("2") do |config|
     sudo apt install -y cmake
     # Install glog
     git clone https://github.com/google/glog.git
-    cd glog/
+    pushd glog/
     cmake -H. -B build -G "Unix Makefiles"
     cmake --build build
     sudo cmake --build build --target install
-    cd ~/
+    popd
     # Install gflags
     wget https://github.com/gflags/gflags/archive/v2.2.2.tar.gz
     tar xzf v2.2.2.tar.gz
-    cd gflags-2.2.2/
+    pushd gflags-2.2.2/
     mkdir build && cd build
     cmake -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DBUILD_gflags_LIB=ON ..
     make
     sudo make install
-    cd ~/
+    popd
     # Install googletest
     git clone https://github.com/google/googletest.git -b release-1.10.0
-    cd googletest
+    pushd googletest
     mkdir build
     cd build
     cmake -DBUILD_SHARED_LIBS=ON ..
     make
     sudo make install
-    cd ~/
+    popd
     # Install gRPC and Protobuf
     git clone --recurse-submodules -b v1.35.0 https://github.com/grpc/grpc
-    cd grpc
+    pushd grpc
     mkdir -p cmake/build
     cd cmake/build
     cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ../..
     make -j4
     sudo make install
-    cd ~/
+    popd
     sudo apt install -y libgtest-dev
     # Install Go
     wget https://golang.org/dl/go1.16.2.linux-amd64.tar.gz
@@ -113,7 +113,14 @@ Vagrant.configure("2") do |config|
     export PATH=$PATH:/usr/local/go/bin
     # Install Go plugins for the protocol compiler
     export GO111MODULE=on  # Enable module mode
-    go get google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
-    export PATH="$PATH:$(go env GOPATH)/bin"
+    export MY_HOME=/home/vagrant
+    GOPATH=$MY_HOME/go go get google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
+    sudo chmod a+w -R $MY_HOME/go
+    sudo chown vagrant -R $MY_HOME/go
+    # Set environment variables
+    echo $'\n' >> $MY_HOME/.profile
+    echo 'export PATH=$PATH:/usr/local/go/bin' >> $MY_HOME/.profile
+    echo 'export PATH=$PATH:$MY_HOME/go/bin' >> $MY_HOME/.profile
+    echo 'export GO111MODULE=on' >> $MY_HOME/.profile
   SHELL
 end
