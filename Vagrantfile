@@ -67,16 +67,19 @@ Vagrant.configure("2") do |config|
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
+    # Install essentials.
     sudo apt-get update
     sudo apt install -y build-essential autoconf libtool pkg-config
     sudo apt install -y clang
     sudo apt install -y cmake
+    # Install glog
     git clone https://github.com/google/glog.git
     cd glog/
     cmake -H. -B build -G "Unix Makefiles"
     cmake --build build
     sudo cmake --build build --target install
     cd ~/
+    # Install gflags
     wget https://github.com/gflags/gflags/archive/v2.2.2.tar.gz
     tar xzf v2.2.2.tar.gz
     cd gflags-2.2.2/
@@ -85,6 +88,7 @@ Vagrant.configure("2") do |config|
     make
     sudo make install
     cd ~/
+    # Install googletest
     git clone https://github.com/google/googletest.git -b release-1.10.0
     cd googletest
     mkdir build
@@ -93,6 +97,7 @@ Vagrant.configure("2") do |config|
     make
     sudo make install
     cd ~/
+    # Install gRPC and Protobuf
     git clone --recurse-submodules -b v1.35.0 https://github.com/grpc/grpc
     cd grpc
     mkdir -p cmake/build
@@ -102,5 +107,13 @@ Vagrant.configure("2") do |config|
     sudo make install
     cd ~/
     sudo apt install -y libgtest-dev
+    # Install Go
+    wget https://golang.org/dl/go1.16.2.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf go1.16.2.linux-amd64.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
+    # Install Go plugins for the protocol compiler
+    export GO111MODULE=on  # Enable module mode
+    go get google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
+    export PATH="$PATH:$(go env GOPATH)/bin"
   SHELL
 end
