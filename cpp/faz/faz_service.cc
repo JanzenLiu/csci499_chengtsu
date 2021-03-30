@@ -33,13 +33,13 @@ Status FazServiceImpl::hook(
   string function_name = request->event_function();
   auto iter = kPredefinedFuncs.find(function_name);
   if (iter == kPredefinedFuncs.end()) {
-    LOG(ERROR) << "Failed to hook function " << function_name <<
+    LOG(ERROR) << "Failed to hook function " << function_name
                << ": not found in the predefined table.";
     return Status(StatusCode::NOT_FOUND,
                   "Function not found in predefined functions.");
   }
   registered_funcs_[event_type] = iter->second;
-  LOG(INFO) << "Successfully hooked function " << function_name <<
+  LOG(INFO) << "Successfully hooked function " << function_name
             << " with event type " << event_type;
   return Status::OK;
 }
@@ -50,7 +50,7 @@ Status FazServiceImpl::unhook(
   int event_type = request->event_type();
   auto iter = registered_funcs_.find(event_type);
   if (iter == registered_funcs_.end()) {
-    LOG(ERROR) << "Failed to unhook event type " << event_type <<
+    LOG(ERROR) << "Failed to unhook event type " << event_type
                << ": not found in the registered table.";
     return Status(StatusCode::NOT_FOUND,
                   "Function not found in registered functions.");
@@ -67,13 +67,13 @@ Status FazServiceImpl::event(
   Any payload = request->payload();
   auto iter = registered_funcs_.find(event_type);
   if (iter == registered_funcs_.end()) {
-    LOG(ERROR) << "Failed to execute event(" << event_type <<
+    LOG(ERROR) << "Failed to execute event(" << event_type
                << "): not found in the registered table.";
     return Status(StatusCode::NOT_FOUND,
                   "Function not found in registered functions.");
   }
   FazFunc func = iter->second;
   Status status = func(&payload, response->mutable_payload(), kvstore_.get());
-  LOG(ERROR) << "Successfully executed event(" << event_type << << ")";
+  LOG(ERROR) << "Successfully executed event(" << event_type << ")";
   return status;
 }
