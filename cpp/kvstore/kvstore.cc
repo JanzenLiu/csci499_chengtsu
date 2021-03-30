@@ -101,9 +101,9 @@ bool KVStore::Put(const string& key, const string& value) {
   return true;
 }
 
-bool KVStore::Remove(const string& key) {
+bool KVStore::Remove(const string& key, bool& key_existed) {
   std::unique_lock<std::shared_mutex> lock(mutex_);
-  int ret = map_.erase(key);
+  key_existed = map_.erase(key);
   // Persist the remove operation to the associated file if applicable.
   if (log_.has_value()) {
     char c = ChangeType::kRemove;
@@ -117,10 +117,15 @@ bool KVStore::Remove(const string& key) {
                 << key << ") to file.";
     }
   }
-  return ret;
+  return key_existed;
 }
 
-void KVStore::Clear() {
+bool KVStore::Remove(const string& key) {
+  bool key_existed;
+  return Remove(key, key_existed);
+}
+
+bool KVStore::Clear() {
   std::unique_lock<std::shared_mutex> lock(mutex_);
   map_.clear();
   // Persist the clear operation to the associated file if applicable.
@@ -134,6 +139,7 @@ void KVStore::Clear() {
       LOG(INFO) << "Successfully persisted operation Clear() to file.";
     }
   }
+  return true;
 }
 
 size_t KVStore::Size() const noexcept {

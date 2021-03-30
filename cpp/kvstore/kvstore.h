@@ -43,16 +43,25 @@ class KVStore : public KVStoreInterface {
   // guaranteed to be thread-safe.
   std::vector<std::string> Get(const std::string& key) const;
 
+  // Note that if an interruption occurs when writing to the file, we don't
+  // handle it immediately, so will end up with a corrupted file. However,
+  // in the constructor, when reloading the file, the KVStore will
+  // automatically detect corrupted data and discard them. So all data will
+  // stay intact except the last operation. Since the program is terminated
+  // when doing put/remove/clear, it will never return acknowledgment to the
+  // user, so the user shouldn't assume the last operation is done.
+
   // Adds a value under the key, and returns true if the put
   // was successful.
   bool Put(const std::string& key, const std::string& value);
 
   // Deletes all previously stored values under the key and
-  // returns true if the key exists in the KVStore.
+  // returns true if the key existed and the delete was successful.
   bool Remove(const std::string& key);
 
-  // Deletes all keys and values.
-  void Clear();
+  // Deletes all keys and values, and returns true if the
+  // clear was successful.
+  bool Clear();
 
   // Returns the number of keys in the KVStore.
   size_t Size() const noexcept;
@@ -64,6 +73,11 @@ class KVStore : public KVStoreInterface {
   void Print()  const;
 
  private:
+  // Deletes all previously stored values under the key, sets
+  // `key_existed` to true if the key existed, and returns true
+  // if the key existed and the delete was successful.
+  bool Remove(const std::string& key, bool& key_existed);
+
   // Loads the next change from the given file stream and
   // returns true on success.
   // Assuming the caller will always make sure EOF has not
@@ -79,6 +93,8 @@ class KVStore : public KVStoreInterface {
   // Dumps the given string to the associated file stream
   // `log_`, and returns true on success.
   bool DumpString(const std::string& str);
+
+  void TruncateTrailingContent(int start_pos);
 
   // Hash map that stores the actual data.
   std::unordered_map<std::string, std::vector<std::string>> map_;

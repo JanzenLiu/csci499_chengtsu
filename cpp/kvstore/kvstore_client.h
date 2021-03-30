@@ -25,7 +25,7 @@ class KVStoreClient : public KVStoreInterface {
   std::vector<std::string> Get(const std::string& key) const;
 
   // Deletes all previously stored values under the key and
-  // returns true if the key exists and the delete is successful.
+  // returns true if the key existed and the delete was successful.
   bool Remove(const std::string& key);
 
  private:
