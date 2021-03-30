@@ -155,7 +155,11 @@ For Example:
 >```
 > When flags for multiple functions are specified, the requested functions will
 > always be executed in the order of:
-> HookAll (first), RegisterUser, Follow, Profile, Caw, Read, UnhookAll (last) 
+> HookAll (first), RegisterUser, Follow, Profile, Caw, Read, UnhookAll (last).
+>
+> Also note that the C++ and Go command-line tool share the same hooking, that
+> means: if you hooked all functions in one command-line tool, you don't need
+> to hook them again with the other one to get it work; same for unhooking.
 
 ## Test <a name = "test"></a>
 Assume you are already in a directory containing the built executables.
