@@ -22,18 +22,18 @@ using std::vector;
 // Change types that will be persisted to file.
 enum ChangeType : char { kPut, kRemove, kClear };
 
-KVStore::KVStore() : map_(), mutex_(), log_() {}
+KVStore::KVStore() : map_(), mutex_(), log_(), filename_() {}
 
 KVStore::KVStore(initializer_list<pair<string, vector<string>>> args)
-    : map_(), mutex_(), log_() {
+    : map_(), mutex_(), log_(), filename_() {
   for (const auto& p : args) {
     map_[p.first] = p.second;
   }
 }
 
 KVStore::KVStore(const string& filename)
-    : map_(), mutex_(), log_() {
-  // Open the file to load changes.
+    : map_(), mutex_(), log_(ofstream()), filename_(filename) {
+  // Open the file in read mode to load changes.
   ifstream infile(filename, ifstream::binary);
   if (infile) {
     LOG(INFO) << "Successfully opened file " << filename << " in read mode.";
@@ -52,22 +52,48 @@ KVStore::KVStore(const string& filename)
     if (corrupted) {
       LOG(ERROR) << "Found corruption starting from position " << cur_pos;
       // Delete all content starting from position `cur_pos` from the file.
-      if (truncate(filename.c_str(), cur_pos) != 0) {
-        LOG(FATAL) << "Failed to truncate trailing content.";
-      } else {
-        LOG(INFO) << " Successfully truncated trailing content.";
-      }
+      TruncateTrailingContent(cur_pos);
+    } else {
+      // Open the file. This is necessary because the member initializer list
+      // only created an empty ofstream, just to make sure the optional has
+      // a value.
+      ReopenFile();
     }
   } else {
     LOG(INFO) << "File " << filename << " does not exists, creating it...";
+    // Create the file and open it.
+    ReopenFile();
   }
-  // Reopen the file in write mode in the case it already exists, or
-  // create the file and open it in the case it doesn't exist.
-  log_.emplace(filename, ofstream::app | ofstream::binary);
+}
+
+void KVStore::TruncateTrailingContent(int start_pos) {
+  // Close the file stream if it is open.
+  if (log_->is_open()) {
+    log_->close();
+  }
+  // Delete all content starting from position `start_pos` from the file.
+  if (truncate(filename_.c_str(), start_pos) != 0) {
+    LOG(FATAL) << "Failed to truncate trailing content from position "
+               << start_pos;
+  } else {
+    LOG(INFO) << "Successfully truncated trailing content from position "
+              << start_pos;
+  }
+  // Reopen the file stream.
+  ReopenFile();
+}
+
+void KVStore::ReopenFile() {
+  // Close the file stream if it is open.
+  if (log_->is_open()) {
+    log_->close();
+  }
+  // Reopen the file stream.
+  log_->open(filename_, ofstream::app | ofstream::binary);
   if (!log_->is_open()) {
-    LOG(FATAL) << " Failed to open file " << filename << " in write mode.";
+    LOG(FATAL) << "Failed to reopen file " << filename_ << "in write mode.";
   }
-  LOG(INFO) << " Successfully opened file " << filename << " in write mode.";
+  LOG(INFO) << "Successfully reopened file " << filename_ << "in write mode.";
 }
 
 vector<string> KVStore::Get(const string& key) const {
@@ -87,16 +113,18 @@ bool KVStore::Put(const string& key, const string& value) {
   // Persist the put operation to the associated file if applicable.
   if (log_.has_value()) {
     char c = ChangeType::kPut;
+    // Get the position of the current character in the output stream.
+    int cur_pos = log_->tellp();
     if (!log_->write(&c, sizeof c) ||
         !DumpString(key) || !DumpString(value) || !log_->flush()) {
-      // TODO(JanzenLiu): Replace with ERROR level and add some
-      //                  more sophisticated error handling.
-      LOG(FATAL) << "Failed to persist operation Put("
+      LOG(ERROR) << "Failed to persist operation Put("
                  << key << ", " << value << ") to file.";
-    } else {
-      LOG(INFO) << "Successfully persisted operation Put("
-                << key << ", " << value << ") to file.";
+      // Delete all content starting from position `cur_pos` from the file.
+      TruncateTrailingContent(cur_pos);
+      return false;
     }
+    LOG(INFO) << "Successfully persisted operation Put("
+              << key << ", " << value << ") to file.";
   }
   return true;
 }
@@ -107,15 +135,17 @@ bool KVStore::Remove(const string& key, bool& key_existed) {
   // Persist the remove operation to the associated file if applicable.
   if (log_.has_value()) {
     char c = ChangeType::kRemove;
+    // Get the position of the current character in the output stream.
+    int cur_pos = log_->tellp();
     if (!log_->write(&c, sizeof c) || !DumpString(key) || !log_->flush()) {
-      // TODO(JanzenLiu): Replace with ERROR level and add some
-      //                  more sophisticated error handling.
-      LOG(FATAL) << "Failed to persist operation Remove("
+      LOG(ERROR) << "Failed to persist operation Remove("
                  << key << ") to file.";
-    } else {
-      LOG(INFO) << "Successfully persisted operation Remove("
-                << key << ") to file.";
+      // Delete all content starting from position `cur_pos` from the file.
+      TruncateTrailingContent(cur_pos);
+      return false;
     }
+    LOG(INFO) << "Successfully persisted operation Remove("
+              << key << ") to file.";
   }
   return key_existed;
 }
@@ -131,13 +161,15 @@ bool KVStore::Clear() {
   // Persist the clear operation to the associated file if applicable.
   if (log_.has_value()) {
     char c = ChangeType::kClear;
+    // Get the position of the current character in the output stream.
+    int cur_pos = log_->tellp();
     if (!log_->write(&c, sizeof c) || !log_->flush()) {
-      // TODO(JanzenLiu): Replace with ERROR level and add some
-      //                  more sophisticated error handling.
-      LOG(FATAL) << "Failed to persist operation Clear() to file.";
-    } else {
-      LOG(INFO) << "Successfully persisted operation Clear() to file.";
+      LOG(ERROR) << "Failed to persist operation Clear() to file.";
+      // Delete all content starting from position `cur_pos` from the file.
+      TruncateTrailingContent(cur_pos);
+      return false;
     }
+    LOG(INFO) << "Successfully persisted operation Clear() to file.";
   }
   return true;
 }

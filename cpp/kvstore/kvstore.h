@@ -94,12 +94,22 @@ class KVStore : public KVStoreInterface {
   // `log_`, and returns true on success.
   bool DumpString(const std::string& str);
 
+  // Deletes all content starting from position `start_pos` from
+  // the associated file. Assume the caller always guarantees
+  // there is an associated file when calling this function.
   void TruncateTrailingContent(int start_pos);
+
+  // Closes (if it is open) and reopens the associated file stream.
+  // Assume the caller always guarantees there is an associated file
+  // when calling this function.
+  void ReopenFile();
 
   // Hash map that stores the actual data.
   std::unordered_map<std::string, std::vector<std::string>> map_;
   // Associated file stream to dump all changes into.
   std::optional<std::ofstream> log_;
+  // Associated file name to dump all changes into.
+  std::string filename_;
   // Read-write lock to enforce thread-safety.
   mutable std::shared_mutex mutex_;
 };
