@@ -113,14 +113,14 @@ Vagrant.configure("2") do |config|
     export PATH=$PATH:/usr/local/go/bin
     # Install Go plugins for the protocol compiler
     export GO111MODULE=on  # Enable module mode
-    export MY_HOME=/home/vagrant
+    export MY_HOME=$(pwd)
     GOPATH=$MY_HOME/go go get google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
     sudo chmod a+w -R $MY_HOME/go
     sudo chown vagrant -R $MY_HOME/go
     # Set environment variables
     echo $'\n' >> $MY_HOME/.profile
     echo 'export PATH=$PATH:/usr/local/go/bin' >> $MY_HOME/.profile
-    echo 'export PATH=$PATH:$MY_HOME/go/bin' >> $MY_HOME/.profile
+    echo 'export PATH=$PATH:$HOME/go/bin' >> $MY_HOME/.profile
     echo 'export GO111MODULE=on' >> $MY_HOME/.profile
   SHELL
 end
