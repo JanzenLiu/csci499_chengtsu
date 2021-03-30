@@ -59,6 +59,11 @@ class KVStore : public KVStoreInterface {
   // returns true if the key existed and the delete was successful.
   bool Remove(const std::string& key);
 
+  // Deletes all previously stored values under the key, sets
+  // `key_existed` to true if the key existed, and returns true
+  // if the key existed and the delete was successful.
+  bool Remove(const std::string& key, bool& key_existed);
+
   // Deletes all keys and values, and returns true if the
   // clear was successful.
   bool Clear();
@@ -73,11 +78,6 @@ class KVStore : public KVStoreInterface {
   void Print()  const;
 
  private:
-  // Deletes all previously stored values under the key, sets
-  // `key_existed` to true if the key existed, and returns true
-  // if the key existed and the delete was successful.
-  bool Remove(const std::string& key, bool& key_existed);
-
   // Loads the next change from the given file stream and
   // returns true on success.
   // Assuming the caller will always make sure EOF has not
