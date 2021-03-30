@@ -38,6 +38,7 @@ KVStore::KVStore(const string& filename)
   if (infile) {
     LOG(INFO) << "Successfully opened file " << filename << " in read mode.";
     int cur_pos = 0;
+    int num_records = 0;
     bool corrupted = false;
     // Keep Loading changes until EOF reached naturally or corruption found.
     while (infile.peek() != EOF && !corrupted) {
@@ -47,7 +48,11 @@ KVStore::KVStore(const string& filename)
       cur_pos = infile.tellg();
       // Consider a failure to load change is cause by corrupted data.
       corrupted = !LoadChange(infile);
+      if (!corrupted) {
+        ++num_records;
+      }
     }
+    LOG(INFO) << num_records << " records loaded.";
     infile.close();
     if (corrupted) {
       LOG(ERROR) << "Found corruption starting from position " << cur_pos;
@@ -91,9 +96,9 @@ void KVStore::ReopenFile() {
   // Reopen the file stream.
   log_->open(filename_, ofstream::app | ofstream::binary);
   if (!log_->is_open()) {
-    LOG(FATAL) << "Failed to reopen file " << filename_ << "in write mode.";
+    LOG(FATAL) << "Failed to reopen file " << filename_ << " in write mode.";
   }
-  LOG(INFO) << "Successfully reopened file " << filename_ << "in write mode.";
+  LOG(INFO) << "Successfully reopened file " << filename_ << " in write mode.";
 }
 
 vector<string> KVStore::Get(const string& key) const {
@@ -123,9 +128,8 @@ bool KVStore::Put(const string& key, const string& value) {
       TruncateTrailingContent(cur_pos);
       return false;
     }
-    LOG(INFO) << "Successfully persisted operation Put("
-              << key << ", " << value << ") to file.";
   }
+  LOG(INFO) << "Successfully Put(" << key << ", " << value << ") to kvstore.";
   return true;
 }
 
@@ -144,9 +148,8 @@ bool KVStore::Remove(const string& key, bool& key_existed) {
       TruncateTrailingContent(cur_pos);
       return false;
     }
-    LOG(INFO) << "Successfully persisted operation Remove("
-              << key << ") to file.";
   }
+  LOG(INFO) << "Successfully Remove(" << key << ") from kvstore.";
   return key_existed;
 }
 
@@ -169,8 +172,8 @@ bool KVStore::Clear() {
       TruncateTrailingContent(cur_pos);
       return false;
     }
-    LOG(INFO) << "Successfully persisted operation Clear() to file.";
   }
+  LOG(INFO) << "Successfully Clear() kvstore.";
   return true;
 }
 
