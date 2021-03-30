@@ -83,7 +83,7 @@ add_executable(${_caw_handler_test}
         cpp/caw/caw_handler.cc
         cpp/kvstore/kvstore.cc)
 target_link_libraries(${_caw_handler_test}
-        gtest gtest_main caw_grpc ${GRPC_LIBS} glog)
+        gtest glog caw_grpc ${GRPC_LIBS})
 
 # Target: Caw CLI (built from Go sources)
 set(_caw_cli_go caw_cli_go)
@@ -94,7 +94,6 @@ add_custom_target(${_caw_cli_go} ALL
             ${CMAKE_CURRENT_SOURCE_DIR}/go/caw_cli.go
             ${CMAKE_CURRENT_SOURCE_DIR}/go/caw_client.go
             ${CMAKE_BINARY_DIR}
-        COMMAND go mod tidy
         COMMAND GO111MODULE=on go build -o ${_caw_cli_go}
         COMMAND ${CMAKE_COMMAND} -E remove
             ${CMAKE_BINARY_DIR}/go.mod

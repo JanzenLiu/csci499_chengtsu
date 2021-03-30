@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include <glog/logging.h>
 #include <grpcpp/grpcpp.h>
 #include <gtest/gtest.h>
 
@@ -368,4 +369,13 @@ TEST_F(CawHandlerTest, CawFuncsTest) {
   // Caw with multiple direct and indirect replies in multiple branches.
   EXPECT_TRUE(Read(caw_ids[0], caws).ok());
   EXPECT_TRUE(cawIdsEq({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, caws));
+}
+
+int main(int argc, char **argv) {
+  // Use a self-defined main function here to call InitGoogleLogging(),
+  // otherwise, all glog messages (including INFO) will be directed to
+  // STDERR and hence displayed to the terminal.
+  testing::InitGoogleTest(&argc, argv);
+  google::InitGoogleLogging(argv[0]);
+  return RUN_ALL_TESTS();
 }
