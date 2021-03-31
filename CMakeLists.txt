@@ -20,44 +20,44 @@ add_subdirectory(protos)
 
 # Include the output directory of the generated proto files
 # and the project source directory.
-include_directories(${CMAKE_BINARY_DIR}/protos src)
+include_directories(${CMAKE_BINARY_DIR}/protos cpp)
 
 # Target: KVStore server
 set(_kvstore_server kvstore_server)
 add_executable(${_kvstore_server}
-        src/kvstore/kvstore_server.cc
-        src/kvstore/kvstore_service.cc
-        src/kvstore/kvstore.cc)
+        cpp/kvstore/kvstore_server.cc
+        cpp/kvstore/kvstore_service.cc
+        cpp/kvstore/kvstore.cc)
 target_link_libraries(${_kvstore_server} PUBLIC
         kvstore_grpc ${GRPC_LIBS} glog gflags)
 
 # Target: KVStore client
 set(_kvstore_client kvstore_client)
 add_library(${_kvstore_client} STATIC
-        src/kvstore/kvstore_client.cc)
+        cpp/kvstore/kvstore_client.cc)
 target_link_libraries(${_kvstore_client} PUBLIC
         kvstore_grpc ${GRPC_LIBS})
 
 # Target: Faz server
 set(_faz_server faz_server)
 add_executable(${_faz_server}
-        src/faz/faz_server.cc
-        src/faz/faz_service.cc
-        src/caw/caw_handler.cc)
+        cpp/faz/faz_server.cc
+        cpp/faz/faz_service.cc
+        cpp/caw/caw_handler.cc)
 target_link_libraries(${_faz_server} PUBLIC
         caw_grpc faz_grpc ${_kvstore_client} ${GRPC_LIBS} glog gflags)
 
 # Target: Caw client
 set(_caw_client caw_client)
 add_library(${_caw_client} STATIC
-        src/caw/caw_client.cc)
+        cpp/caw/caw_client.cc)
 target_link_libraries(${_caw_client} PUBLIC
         caw_grpc faz_grpc ${GRPC_LIBS})
 
 # Target: Caw CLI (built from C++ sources)
 set(_caw_cli caw_cli)
 add_executable(${_caw_cli}
-        src/caw/caw_cli.cc)
+        cpp/caw/caw_cli.cc)
 target_link_libraries(${_caw_cli} PUBLIC
         caw_grpc ${_caw_client} ${GRPC_LIBS} gflags)
 
@@ -65,7 +65,7 @@ target_link_libraries(${_caw_cli} PUBLIC
 set(_kvstore_test kvstore_test)
 add_executable(${_kvstore_test}
         test/kvstore_test.cc
-        src/kvstore/kvstore.cc)
+        cpp/kvstore/kvstore.cc)
 target_link_libraries(${_kvstore_test} PUBLIC
         gtest glog pthread)
 
@@ -80,21 +80,21 @@ target_link_libraries(${_kvstore_shell_test}
 set(_caw_handler_test caw_handler_test)
 add_executable(${_caw_handler_test}
         test/caw_handler_test.cc
-        src/caw/caw_handler.cc
-        src/kvstore/kvstore.cc)
+        cpp/caw/caw_handler.cc
+        cpp/kvstore/kvstore.cc)
 target_link_libraries(${_caw_handler_test}
-        gtest gtest_main caw_grpc ${GRPC_LIBS} glog)
+        gtest glog caw_grpc ${GRPC_LIBS})
 
 # Target: Caw CLI (built from Go sources)
 set(_caw_cli_go caw_cli_go)
 add_custom_target(${_caw_cli_go} ALL
         COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_CURRENT_SOURCE_DIR}/go.mod
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/caw/caw_cli.go
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/caw/caw_client.go
+            ${CMAKE_CURRENT_SOURCE_DIR}/go.sum
+            ${CMAKE_CURRENT_SOURCE_DIR}/go/caw_cli.go
+            ${CMAKE_CURRENT_SOURCE_DIR}/go/caw_client.go
             ${CMAKE_BINARY_DIR}
-        COMMAND go mod tidy
-        COMMAND go build -o ${_caw_cli_go}
+        COMMAND GO111MODULE=on go build -o ${_caw_cli_go}
         COMMAND ${CMAKE_COMMAND} -E remove
             ${CMAKE_BINARY_DIR}/go.mod
             ${CMAKE_BINARY_DIR}/go.sum

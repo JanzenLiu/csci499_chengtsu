@@ -99,33 +99,31 @@ To run the FaaS server
 
 ### Caw Command-line Tool
 To use the Caw command-line tool for different purposes.
-Note the tiny difference between the flag usage of the C++ and Go version
-command-line tools: C++ accepts double-dash flags while accepts single-dash ones.
 
 - To hook all Caw functions: 
     - `./caw_cli --hook_all`
-    - `./caw_cli_go -hook_all`
+    - `./caw_cli_go --hook_all`
 - To register a user: 
     - `./caw_cli --registeruser <username>`
-    - `./caw_cli_go -registeruser <username>`
+    - `./caw_cli_go --registeruser <username>`
 - To follow another user on behalf of a user: 
     - `./caw_cli --user <username> --follow <to_follow>`
-    - `./caw_cli_go -user <username> -follow <to_follow>`
+    - `./caw_cli_go --user <username> --follow <to_follow>`
 - To get a user's profile: 
     - `./caw_cli --user <username> --profile`
-    - `./caw_cli_go -user <username> -profile`
+    - `./caw_cli_go --user <username> --profile`
 - To post a caw on behalf of a user: 
     - `./caw_cli --user <username> --caw <text>`
-    - `./caw_cli_go -user <username> -caw <text>`
+    - `./caw_cli_go --user <username> --caw <text>`
 - To post a caw replying an existing caw on behalf of a user: 
     - `./caw_cli --user <username> --caw <text> --reply <parent_caw_id>`
-    - `./caw_cli_go -user <username> -caw <text> -reply <parent_caw_id>`
+    - `./caw_cli_go --user <username> --caw <text> --reply <parent_caw_id>`
 - To read a caw thread starting from a caw: 
     - `./caw_cli --read <caw_id>`
-    - `./caw_cli_go -read <caw_id>`
+    - `./caw_cli_go --read <caw_id>`
 - To unhook all Caw functions: 
     - `./caw_cli --unhook_all`
-    - `./caw_cli_go -unhook_all`
+    - `./caw_cli_go --unhook_all`
 
 For Example:
 ```
@@ -138,13 +136,13 @@ For Example:
 ./caw_cli --user Eren --caw "Sit down, Reiner"
 ./caw_cli --unhook_all
 # Go version
-./caw_cli_go -hook_all
-./caw_cli_go -registeruser Eren
-./caw_cli_go -registeruser Mikasa
-./caw_cli_go -user Mikasa -follow Eren
-./caw_cli_go -user Mikasa -profile
-./caw_cli_go -user Eren -caw "Sit down, Reiner"
-./caw_cli_go -unhook_all
+./caw_cli_go --hook_all
+./caw_cli_go --registeruser Eren
+./caw_cli_go --registeruser Mikasa
+./caw_cli_go --user Mikasa --follow Eren
+./caw_cli_go --user Mikasa --profile
+./caw_cli_go --user Eren --caw "Sit down, Reiner"
+./caw_cli_go --unhook_all
 ```
 
 > **Note!** The command-line tool also supports chaining flags to enable you 
@@ -157,7 +155,11 @@ For Example:
 >```
 > When flags for multiple functions are specified, the requested functions will
 > always be executed in the order of:
-> HookAll (first), RegisterUser, Follow, Profile, Caw, Read, UnhookAll (last) 
+> HookAll (first), RegisterUser, Follow, Profile, Caw, Read, UnhookAll (last).
+>
+> Also note that the C++ and Go command-line tool share the same hooking, that
+> means: if you hooked all functions in one command-line tool, you don't need
+> to hook them again with the other one to get it work; same for unhooking.
 
 ## Test <a name = "test"></a>
 Assume you are already in a directory containing the built executables.

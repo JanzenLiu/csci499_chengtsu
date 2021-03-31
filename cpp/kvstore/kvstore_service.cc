@@ -42,10 +42,16 @@ Status KeyValueStoreServiceImpl::get(
 Status KeyValueStoreServiceImpl::remove(
     ServerContext* context, const RemoveRequest* request,
     RemoveReply* response) {
-  bool found = store_.Remove(request->key());
-  if (!found) {
-    return Status(StatusCode::NOT_FOUND,
-                  "Key not found in the kvstore.");
+  bool found;
+  bool success = store_.Remove(request->key(), found);
+  if (!success) {
+    if (!found) {
+      return Status(StatusCode::NOT_FOUND,
+                    "Key not found in the kvstore.");
+    } else {
+      return Status(StatusCode::UNAVAILABLE,
+                    "Failed to remove the key.");
+    }
   }
   return Status::OK;
 }
