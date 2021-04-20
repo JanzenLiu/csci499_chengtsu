@@ -6,8 +6,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <regex>
+#include <set>
 
 #include <glog/logging.h>
+#include <google/protobuf/any.pb.h>
 
 #include "caw.pb.h"
 
@@ -25,6 +28,7 @@ const string kUserFollowersPrefix = "user_followers.";
 const string kFollowingPairPrefix = "following_pair.";
 const string kCawPrefix = "caw.";
 const string kReplyPrefix = "caw_reply.";
+const string kHashtagPrefix = "caw_hashtag.";
 
 // Returns true if the user exists in the KVStore.
 bool UserExists(const string& username, KVStoreInterface* kvstore){
@@ -53,6 +57,21 @@ string GenerateRandomID(int length) {
     res[i] = digits[rand() % 16];
   }
   return res;
+}
+
+// Returns hashtags included in the text of the caw
+// Hashtag is defined as one or more alphanumeric characters following the '#'
+vector<string> GetHashtags(const string& text) {
+  string raw(text);
+  std::regex pattern("#([0-9a-zA-Z]+)");
+  vector<string> hashtags;
+  auto begin = std::sregex_iterator(raw.begin(), raw.end(), pattern);
+  auto end = std::sregex_iterator();
+  for (auto it = begin; it != end; ++it) {
+    std::smatch match = *it;
+    hashtags.push_back(match.str(1));
+  }
+  return hashtags;
 }
 
 Status caw::handler::RegisterUser(const Any* in, Any* out,
@@ -190,6 +209,16 @@ Status caw::handler::Caw(const Any *in, Any *out,
                     "Failed to add caw post to the kvstore.");
     }
   }
+  // Adds <hashtag, id> pairs to the storage.
+  auto hashtag_vec = GetHashtags(text);
+  std::set<string> hashtags(hashtag_vec.begin(), hashtag_vec.end());
+  for (const auto& hashtag : hashtags) {
+    string hashtag_key = kHashtagPrefix + hashtag;
+    if (!kvstore->Put(hashtag_key, id)) {
+      return Status(StatusCode::UNAVAILABLE,
+                    "Failed to add hashtag, id mappings to the kvstore.");
+    }
+  }
   // Pack the response message.
   caw::CawReply response;
   response.set_allocated_caw(caw);
@@ -241,6 +270,41 @@ Status caw::handler::Read(const Any *in, Any *out,
     if (!current_caw_success) {
       return Status(StatusCode::UNAVAILABLE,
                     "Error reading caw " + current_caw_id + ".");
+    }
+  }
+  // Pack the response message.
+  out->PackFrom(response);
+  return Status::OK;
+}
+
+Status caw::handler::Stream(const Any *in, Any *out,
+                            KVStoreInterface *kvstore) {
+  // Unpack the request message.
+  caw::StreamRequest request;
+  in->UnpackTo(&request);
+  string hashtag_key = kHashtagPrefix + request.hashtag();
+  Timestamp timestamp = request.timestamp();
+  // Only retrieve caws with timestamp after start time of the stream request
+  int start = timestamp.seconds();
+  caw::StreamReply response;
+  vector<string> values = kvstore->Get(hashtag_key);
+  for (const auto& id : values) {
+    string key = kCawPrefix + id;
+    auto value = kvstore->Get(key);
+    if (value.size() == 1) {
+      caw::Caw temp_caw;
+      string caw_str = value[0];
+      if (temp_caw.ParseFromString(caw_str)) {
+        int time = temp_caw.timestamp().seconds();
+        if (time > start) {
+          response.add_caws()->CopyFrom(temp_caw);
+        }
+      } else {
+        LOG(ERROR) << "Error decoding caw " << id;
+      }
+    } else {
+      LOG(ERROR) << "Error finding caw " << id << ": "
+                 << values.size() << " records found, expected 1.";
     }
   }
   // Pack the response message.

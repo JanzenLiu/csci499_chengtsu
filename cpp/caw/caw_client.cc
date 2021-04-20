@@ -28,7 +28,8 @@ const unordered_map<CawClient::EventType, string> CawClient::kFuncs = {
     {EventType::kFollow, "Follow"},
     {EventType::kProfile, "Profile"},
     {EventType::kCaw, "Caw"},
-    {EventType::kRead, "Read"}};
+    {EventType::kRead, "Read"},
+    {EventType::kStream, "Stream"}};
 
 bool CawClient::HookAll() {
   bool success = true;
@@ -179,6 +180,30 @@ vector<caw::Caw> CawClient::Read(const string &caw_id) {
   // Get the Caw message.
   if (!response.has_payload()) { return {}; }
   caw::ReadReply inner_response;
+  response.payload().UnpackTo(&inner_response);
+  auto& caws = inner_response.caws();
+  return vector<caw::Caw>(caws.begin(), caws.end());
+}
+
+std::optional<std::vector<caw::Caw>> CawClient::Stream(const std::string hashtag, caw::Timestamp* timestamp) {
+  // Make the inner request packed in the generic request payload.
+  caw::StreamRequest inner_request;
+  inner_request.set_hashtag(hashtag);
+  inner_request.set_allocated_timestamp(timestamp);
+  // Make the generic request
+  ClientContext context;
+  EventRequest request;
+  EventReply response;
+  request.set_event_type(EventType::kStream);
+  request.mutable_payload()->PackFrom(inner_request);
+  // Make RPC to the Faz service
+  Status status = stub_->event(&context, request, &response);
+  if (!status.ok()) {
+    cout << status.error_message() << endl;
+    return {};
+  }
+  if (!response.has_payload()) { return {}; }
+  caw::StreamReply inner_response;
   response.payload().UnpackTo(&inner_response);
   auto& caws = inner_response.caws();
   return vector<caw::Caw>(caws.begin(), caws.end());
