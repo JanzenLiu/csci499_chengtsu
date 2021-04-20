@@ -2,6 +2,7 @@
 #define CSCI499_CHENGTSU_CAW_HANDLER_H
 
 #include <grpcpp/grpcpp.h>
+#include <google/protobuf/any.pb.h>
 
 #include "kvstore/kvstore_client.h"
 
@@ -62,6 +63,13 @@ grpc::Status Read(const google::protobuf::Any *in,
                   google::protobuf::Any *out,
                   KVStoreInterface *kvstore);
 
+// Gets the caws containing the hashtag.
+// @param in: Carries a `StreamRequest` message.
+// @param out: Carries a `StreamReply` message.
+// See <project_root>/protos/caw.proto for more details.
+grpc::Status Stream(const google::protobuf::Any *in,
+                    google::protobuf::Any *out,
+                    KVStoreInterface *kvstore);
 }  // namespace handler
 }  // namespace caw
 

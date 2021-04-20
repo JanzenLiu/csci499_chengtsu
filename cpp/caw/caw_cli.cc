@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <chrono>
+#include <thread>
 
 #include <gflags/gflags.h>
 #include <grpcpp/grpcpp.h>
@@ -28,6 +30,7 @@ DEFINE_string(caw, "", "Creates a new caw with the given text");
 DEFINE_string(reply, "", "Indicates that the new caw is a reply to the given id");
 DEFINE_string(follow, "", "Starts following the given username");
 DEFINE_string(read, "", "Reads the caw thread starting at the given id");
+DEFINE_string(stream, "", "Stream all caws containing the hashtag.");
 DEFINE_bool(profile, false, "Gets the user’s profile of following and followers");
 DEFINE_bool(hook_all, false, "Hooks all Caw functions to the Faz layer.");
 DEFINE_bool(unhook_all, false, "Unhooks all Caw functions from the Faz layer.");
@@ -132,7 +135,35 @@ int main(int argc, char *argv[]) {
       cout << caw << endl;
     }
   }
-
+  // Handle flag --stream
+  if (!FLAGS_stream.empty()) {
+    if (FLAGS_stream[0] != '#')
+      cout << "The format of the hashtag should be started with #" << endl;
+    else {
+      cout << "Stream all new caws containing the " + FLAGS_stream << endl;
+      // Use the current time as the timestamp for the StreamRequest for the first time
+      // Update the timestamp to the most recent timestamp of the caw to avoid duplicates
+      auto now = std::chrono::system_clock::now().time_since_epoch();
+      google::protobuf::Arena arena;
+      caw::Timestamp* timestamp = google::protobuf::Arena::CreateMessage<caw::Timestamp>(&arena);
+      timestamp->set_seconds(std::chrono::duration_cast<std::chrono::seconds>(now).count());
+      timestamp->set_useconds(std::chrono::duration_cast<std::chrono::milliseconds>(now).count());
+      while (true) {
+        auto caws = client.Stream(FLAGS_stream.substr(1), timestamp);
+        if (caws.has_value()) {
+          auto caws_vec = caws.value();
+          for (const auto &caw : caws_vec) {
+            cout << caw << endl;
+          }
+          if (caws_vec.size()) {
+            *timestamp = caws_vec.at(caws_vec.size() - 1).timestamp();
+          }
+        }
+        std::chrono::seconds duration(5);
+        std::this_thread::sleep_for(duration);
+      }
+    }
+  }
   // Handle flag --unhook_all.
   if (FLAGS_unhook_all) {
     cout << "Unhooking all Caw functions from the Faz layer..." << endl;

@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 option go_package = "github.com/JanzenLiu/csci499_chengtsu/protos/caw";
+option cc_enable_arenas = true;
 
 package caw;
 
@@ -60,4 +61,13 @@ message ProfileRequest {
 message ProfileReply {
   repeated string followers = 1;
   repeated string following = 2;
+}
+
+message StreamRequest {
+  string hashtag = 1;
+  Timestamp timestamp = 2;
+}
+
+message StreamReply {
+  repeated Caw caws = 1;
 }

@@ -24,7 +24,8 @@ const unordered_map<string, FazFunc> FazServiceImpl::kPredefinedFuncs = {
     {"Follow", caw::handler::Follow},
     {"Profile", caw::handler::Profile},
     {"Caw", caw::handler::Caw},
-    {"Read", caw::handler::Read}};
+    {"Read", caw::handler::Read},
+    {"Stream", caw::handler::Stream}};
 
 Status FazServiceImpl::hook(
     ServerContext* context,
