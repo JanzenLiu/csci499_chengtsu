@@ -154,9 +154,10 @@ int main(int argc, char *argv[]) {
           auto caws_vec = caws.value();
           for (const auto &caw : caws_vec) {
             cout << caw << endl;
-          }
-          if (caws_vec.size()) {
-            *timestamp = caws_vec.at(caws_vec.size() - 1).timestamp();
+            // Get the latest timestamp of the returned caws
+            if (caw.timestamp().useconds() > timestamp->useconds()) {
+               *timestamp = caw.timestamp();
+            }
           }
         }
         std::chrono::seconds duration(5);

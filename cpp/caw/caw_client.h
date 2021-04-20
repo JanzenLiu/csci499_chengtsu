@@ -51,6 +51,8 @@ class CawClient {
 
   // Sends an `EventType::kStream` event to Faz, and returns Caw
   // messages containing the hashtag.
+  // timestamp is the start time for the stream call, only caws posted
+  // after this time will be returned
   std::optional<std::vector<caw::Caw>> Stream(const std::string hashtag, caw::Timestamp* timestamp);
 
  private:
