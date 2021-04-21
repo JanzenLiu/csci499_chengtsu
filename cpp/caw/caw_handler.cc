@@ -285,7 +285,7 @@ Status caw::handler::Stream(const Any *in, Any *out,
   string hashtag_key = kHashtagPrefix + request.hashtag();
   Timestamp timestamp = request.timestamp();
   // Only retrieve caws with timestamp after start time of the stream request
-  int start = timestamp.useconds();
+  int64_t start = timestamp.useconds();
   caw::StreamReply response;
   vector<string> values = kvstore->Get(hashtag_key);
   for (const auto& id : values) {
@@ -295,7 +295,7 @@ Status caw::handler::Stream(const Any *in, Any *out,
       caw::Caw temp_caw;
       string caw_str = value[0];
       if (temp_caw.ParseFromString(caw_str)) {
-        int time = temp_caw.timestamp().useconds();
+        int64_t time = temp_caw.timestamp().useconds();
         if (time > start) {
           response.add_caws()->CopyFrom(temp_caw);
         }
