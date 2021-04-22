@@ -121,6 +121,9 @@ To use the Caw command-line tool for different purposes.
 - To read a caw thread starting from a caw: 
     - `./caw_cli --read <caw_id>`
     - `./caw_cli_go --read <caw_id>`
+- To stream all caws containing hashtag
+  - `./caw_cli --stream <hashtag>`
+  - Golang version does not support stream feature for now.
 - To unhook all Caw functions: 
     - `./caw_cli --unhook_all`
     - `./caw_cli_go --unhook_all`
@@ -133,7 +136,8 @@ For Example:
 ./caw_cli --registeruser Mikasa
 ./caw_cli --user Mikasa --follow Eren
 ./caw_cli --user Mikasa --profile
-./caw_cli --user Eren --caw "Sit down, Reiner"
+./caw_cli --stream "#AttackOnTitan"
+./caw_cli --user Eren --caw "#AttackOnTitan Sit down, Reiner"
 ./caw_cli --unhook_all
 # Go version
 ./caw_cli_go --hook_all

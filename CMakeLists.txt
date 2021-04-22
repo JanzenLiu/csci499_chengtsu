@@ -83,7 +83,7 @@ add_executable(${_caw_handler_test}
         cpp/caw/caw_handler.cc
         cpp/kvstore/kvstore.cc)
 target_link_libraries(${_caw_handler_test}
-        gtest glog caw_grpc ${GRPC_LIBS})
+        GTest::GTest glog caw_grpc ${GRPC_LIBS})
 
 # Target: Caw CLI (built from Go sources)
 set(_caw_cli_go caw_cli_go)

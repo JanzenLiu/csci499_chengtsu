@@ -127,6 +127,21 @@ class CawHandlerTest : public ::testing::Test {
     return status;
   }
 
+  // Calls `caw::handler::Stream()` and returns the status.
+  Status Stream(const string& hashtag, caw::Timestamp* timestamp, vector<caw::Caw>& caws) {
+    caw::StreamRequest request;
+    request.set_hashtag(hashtag);
+    request.set_allocated_timestamp(timestamp);
+    Any in;
+    in.PackFrom(request);
+    Any out;
+    Status status = caw::handler::Stream(&in, &out, kvstore_.get());
+    caw::StreamReply response;
+    out.UnpackTo(&response);
+    caws.assign(response.caws().begin(), response.caws().end());
+    return status;
+  }
+
   // Tests whether a caw::Caw message is as expected.
   ::testing::AssertionResult
   CawIsCorrect(const string& expected_username, const string& expected_text,
@@ -369,6 +384,101 @@ TEST_F(CawHandlerTest, CawFuncsTest) {
   // Caw with multiple direct and indirect replies in multiple branches.
   EXPECT_TRUE(Read(caw_ids[0], caws).ok());
   EXPECT_TRUE(cawIdsEq({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, caws));
+}
+
+// Tests the functionality (side effect) of the caw related Caw
+// functions: `caw::handler::Stream()`. Only caws which is sent
+// after the stream request and contains the specified hashtag
+// are expected to be returned.
+TEST_F(CawHandlerTest, StreamFuncsTest) {
+  vector<caw::Caw> caws;
+
+  google::protobuf::Arena arena;
+  caw::Timestamp* timestamp = google::protobuf::Arena::CreateMessage<caw::Timestamp>(&arena);
+  timestamp->set_seconds(std::chrono::duration_cast<std::chrono::seconds>(
+      std::chrono::system_clock::now().time_since_epoch()).count());
+  timestamp->set_useconds(GetCurrentTimestamp());
+
+  Stream("AttackOnTitan", timestamp, caws);
+
+  // Non-existent caw with hashtag
+  EXPECT_TRUE(caws.empty());
+
+  RegisterUser("reiner");
+  RegisterUser("bertholdt");
+  RegisterUser("eren");
+  vector<string> caw_ids;
+
+  // Calls `CawHandlerTest::Caw()` to post a caw with the given information,
+  // and add the id of the created caw to the vector `caw_ids`.
+  auto addCaw = [&caw_ids, this](const string& username, const string& text,
+                                 const string& parent_id) {
+    caw::Caw caw;
+    Caw(username, text, parent_id, &caw);
+    caw_ids.push_back(caw.id());
+  };
+
+  // Adds some caws before the stream request,
+  // some of these caws contain the expected hashtag.
+  // However, these caws should not show in the return list
+  // of stream call.
+  addCaw("reiner", "I am the Armored Titan #AttackOnTitan#", "");  // caw 0
+  addCaw("reiner", "He is the #AttackOnTitan Colossal Titan", caw_ids[0]);  // caw 1
+  addCaw("bertholdt", "Reiner!", caw_ids[1]);  // caw 2
+  addCaw("bertholdt", "Are we doing it?", caw_ids[1]);  // caw 3
+  addCaw("reiner", "#AttackOnTitan I see", caw_ids[2]);  // caw 4
+  addCaw("reiner", " I've just... been here way too long",
+         caw_ids[4]);  // caw 5
+  addCaw("eren", "#AttackOnTitan# Sit down Reiner", caw_ids[5]);  // caw 6
+
+  timestamp->set_seconds(std::chrono::duration_cast<std::chrono::seconds>(
+      std::chrono::system_clock::now().time_since_epoch()).count());
+  timestamp->set_useconds(GetCurrentTimestamp());
+
+  Stream("AttackTitan", timestamp, caws);
+
+  // Non-existent hashtag
+  EXPECT_TRUE(caws.empty());
+
+  // Adds more caws with the hashtag #AttackOnTitan.
+  // For the reason that these caws are posted after the
+  // timestamp of the stream call so that they should be
+  // returned.
+
+  addCaw("eren", "Come with #AttackOnTitan me", ""); // caw 7
+  // AttackOnTitan here is not a hashtag, so this caw should not be returned
+  addCaw("reiner", "Hmmmmm, AttackOnTitan", ""); // caw 8
+  // Caw with duplicate hashtag should be returned only once
+  addCaw("reiner", "#AttackOnTitan#AttackOnTitan# Come with us", "");  // caw 9
+  // Caw with other hashtag should not be returned
+  addCaw("bertholdt", "#Titan I'm ready for the fight!", ""); // caw 10
+
+  // Tests whether a vector of `caw::Caw` contains and only
+  // contains the caws with expected ids, regardless of the order.
+  auto cawIdsEq = [&caw_ids](const vector<int>& expected_indices,
+                             const vector<caw::Caw>& actual) {
+    if (expected_indices.size() != actual.size()) {
+      return ::testing::AssertionFailure()
+          << "actual.size() (" << actual.size() << ") != "
+          << "expected_indices.size() (" << expected_indices.size() << ")";
+    }
+    set<string> actual_ids;
+    for (auto& caw : actual) {
+      actual_ids.insert(caw.id());
+    }
+    for (int i : expected_indices){
+      string expected_id = caw_ids[i];
+      if (!actual_ids.count(expected_id)){
+        return ::testing::AssertionFailure()
+            << "expected caw " << i << " is not in actual.";
+      }
+    }
+    return ::testing::AssertionSuccess();
+  };
+
+  EXPECT_TRUE(Stream("AttackOnTitan", timestamp, caws).ok());
+  EXPECT_EQ(caws.size(), 2);
+  EXPECT_TRUE(cawIdsEq({7, 9}, caws));
 }
 
 int main(int argc, char **argv) {
