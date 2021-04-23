@@ -137,6 +137,7 @@ For Example:
 ./caw_cli --user Mikasa --follow Eren
 ./caw_cli --user Mikasa --profile
 ./caw_cli --stream "#AttackOnTitan"
+# Open another terminal window and post the new caw with hashtag
 ./caw_cli --user Eren --caw "#AttackOnTitan Sit down, Reiner"
 ./caw_cli --unhook_all
 # Go version
