@@ -186,6 +186,7 @@ some extreme cases (for example, a posted caw accidentally lost in the database)
 
 ## Authors <a name = "authors"></a>
 - [Cheng-Tsung Liu](https://github.com/JanzenLiu)
+- [Guosheng Zhou](https://github.com/Edward-Chow) ("phase3" branch)
 
 ## Acknowledgements <a name = "acks"></a>
 (In alphabetical order of first name)
