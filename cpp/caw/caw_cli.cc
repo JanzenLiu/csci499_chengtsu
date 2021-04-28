@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
       google::protobuf::Arena arena;
       caw::Timestamp* timestamp = google::protobuf::Arena::CreateMessage<caw::Timestamp>(&arena);
       timestamp->set_seconds(std::chrono::duration_cast<std::chrono::seconds>(now).count());
-      timestamp->set_useconds(std::chrono::duration_cast<std::chrono::milliseconds>(now).count());
+      timestamp->set_useconds(std::chrono::duration_cast<std::chrono::microseconds>(now).count());
       while (true) {
         auto caws = client.Stream(FLAGS_stream.substr(1), timestamp);
         if (caws.has_value()) {
